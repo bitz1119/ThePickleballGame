@@ -1,0 +1,52 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { courses } from '../../data/courses';
+
+export function getStaticPaths() {
+  return courses.map(course => ({
+    params: { id: course.id.toString() },
+    props: { course },
+  }));
+}
+
+const { course } = Astro.props;
+
+if (!course) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={course.title}>
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="grid lg:grid-cols-3 gap-8">
+      <!-- Course Content -->
+      <div class="lg:col-span-2">
+        <h1 class="text-3xl font-bold mb-6">{course.title}</h1>
+        <p class="text-gray-600 mb-8">{course.description}</p>
+        
+        <div class="prose lg:prose-xl">
+          {course.lessons.map((lesson, index) => (
+            <div class="mb-12">
+              <h2>Lesson {index + 1}: {lesson.title}</h2>
+              <div class="whitespace-pre-wrap">{lesson.content}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Course Sidebar -->
+      <div class="bg-white p-6 rounded-lg shadow-md h-fit">
+        <h2 class="text-xl font-bold mb-4">Course Content</h2>
+        <div class="space-y-2">
+          {course.lessons.map((lesson, index) => (
+            <div class="p-3 bg-gray-50 rounded hover:bg-gray-100">
+              <h3 class="font-medium">
+                Lesson {index + 1}: {lesson.title}
+              </h3>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

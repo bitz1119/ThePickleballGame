@@ -1,0 +1,48 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Welcome">
+	<div class="max-w-6xl mx-auto">
+		<h1 class="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text">Welcome to Pickleball Guide</h1>
+		
+		<div class="grid md:grid-cols-2 gap-8">
+			<div class="bg-gradient-to-br from-gray-800 to-gray-700 p-6 rounded-xl shadow-xl backdrop-blur-lg border border-gray-700">
+				<h2 class="text-2xl font-bold mb-4 text-purple-400">What is Pickleball?</h2>
+				<p class="text-gray-300">
+					Pickleball is a paddleball sport that combines elements of tennis, badminton, and table tennis. 
+					It's played on a smaller court with a lower net, making it accessible to players of all ages and skill levels.
+				</p>
+			</div>
+
+			<div class="bg-gradient-to-br from-gray-800 to-gray-700 p-6 rounded-xl shadow-xl backdrop-blur-lg border border-gray-700">
+				<h2 class="text-2xl font-bold mb-4 text-pink-400">Why Play Pickleball?</h2>
+				<ul class="list-disc pl-6 text-gray-300">
+					<li>Easy to learn</li>
+					<li>Great exercise</li>
+					<li>Social and fun</li>
+					<li>Suitable for all ages</li>
+					<li>Growing community</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="mt-12">
+			<h2 class="text-3xl font-bold mb-8 text-center text-blue-400">Getting Started</h2>
+			<div class="grid md:grid-cols-3 gap-6">
+				<a href="/equipment" class="block bg-gradient-to-br from-purple-900/50 to-purple-800/50 p-6 rounded-xl shadow-xl hover:scale-105 transition-transform duration-300 border border-purple-700/50">
+					<h3 class="font-bold text-xl mb-2 text-purple-400">Equipment Guide</h3>
+					<p class="text-gray-300">Learn about paddles, balls, and essential gear.</p>
+				</a>
+				<a href="/rules" class="block bg-gradient-to-br from-pink-900/50 to-pink-800/50 p-6 rounded-xl shadow-xl hover:scale-105 transition-transform duration-300 border border-pink-700/50">
+					<h3 class="font-bold text-xl mb-2 text-pink-400">Rules & Scoring</h3>
+					<p class="text-gray-300">Understanding the basic rules and scoring system.</p>
+				</a>
+				<a href="/techniques" class="block bg-gradient-to-br from-blue-900/50 to-blue-800/50 p-6 rounded-xl shadow-xl hover:scale-105 transition-transform duration-300 border border-blue-700/50">
+					<h3 class="font-bold text-xl mb-2 text-blue-400">Basic Techniques</h3>
+					<p class="text-gray-300">Master the fundamental shots and strategies.</p>
+				</a>
+			</div>
+		</div>
+	</div>
+</Layout>

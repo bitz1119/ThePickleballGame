@@ -1,0 +1,31 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { blogPosts } from '../../data/blogPosts';
+
+export function getStaticPaths() {
+  return blogPosts.map(post => ({
+    params: { slug: post.id.toString() },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={post.title}>
+  <div class="max-w-4xl mx-auto px-4">
+    <article class="prose lg:prose-xl">
+      <h1>{post.title}</h1>
+      <div class="text-gray-600 mb-8">
+        <span>{post.author}</span>
+        <span class="mx-2">•</span>
+        <span>{new Date(post.date).toLocaleDateString()}</span>
+      </div>
+      <div class="whitespace-pre-wrap">{post.body}</div>
+    </article>
+  </div>
+</Layout>
