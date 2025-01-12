@@ -18,17 +18,51 @@ const { title } = Astro.props;
 	</head>
 	<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 min-h-screen">
 		<header class="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
-			<nav class="max-w-6xl mx-auto px-4 py-6">
-				<ul class="flex space-x-6">
-					<li><a href="/" class="hover:text-white transition-colors">Home</a></li>
-					<li><a href="/blog" class="hover:text-white transition-colors">Blog</a></li>
-					<li><a href="/courses" class="hover:text-white transition-colors">Courses</a></li>
-					<li><a href="/equipment" class="hover:text-white transition-colors">Equipment</a></li>
-					<li><a href="/rules" class="hover:text-white transition-colors">Rules</a></li>
-					<li><a href="/techniques" class="hover:text-white transition-colors">Techniques</a></li>
-				</ul>
+			<nav class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+			  <!-- Logo or Title -->
+			  <div class="flex items-center">
+				<img src="/public/logo.png" alt="Logo" class="w-10 h-10 mr-3">
+				<span class="text-white text-lg font-bold">
+				  <a href="/">Pickleball Info</a>
+				</span>
+			  </div>
+		  
+			  <!-- Hamburger Icon -->
+			  <button id="hamburger" class="lg:hidden text-white text-2xl focus:outline-none">
+				☰
+			  </button>
+		  
+			  <!-- Navigation Links (Desktop) -->
+			  <ul class="hidden lg:flex space-x-6">
+				<li><a href="/" class="hover:text-white transition-colors">Home</a></li>
+				<li><a href="/blog" class="hover:text-white transition-colors">Blog</a></li>
+				<li><a href="/courses" class="hover:text-white transition-colors">Courses</a></li>
+				<li><a href="/equipment" class="hover:text-white transition-colors">Equipment</a></li>
+				<li><a href="/rules" class="hover:text-white transition-colors">Rules</a></li>
+				<li><a href="/techniques" class="hover:text-white transition-colors">Techniques</a></li>
+			  </ul>
 			</nav>
-		</header>
+		  </header>
+		  
+		  <!-- Modal -->
+		  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
+			<div class="bg-white w-4/5 max-w-md rounded-lg p-6 text-center">
+			  <!-- Close Button -->
+			  <button id="closeModal" class="absolute top-4 right-4 text-2xl text-gray-500 hover:text-gray-700 focus:outline-none">
+				&times;
+			  </button>
+			  <ul class="space-y-4">
+				<li><a href="/" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Home</a></li>
+				<li><a href="/blog" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Blog</a></li>
+				<li><a href="/courses" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Courses</a></li>
+				<li><a href="/equipment" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Equipment</a></li>
+				<li><a href="/rules" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Rules</a></li>
+				<li><a href="/techniques" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Techniques</a></li>
+			  </ul>
+			</div>
+		  </div>
+		  
+		  
 		<main class="py-8 px-4">
 			<slot />
 		</main>
@@ -38,4 +72,28 @@ const { title } = Astro.props;
 			</div>
 		</footer>
 	</body>
+	<script>
+		// Elements
+		const hamburger = document.getElementById('hamburger');
+		const modal = document.getElementById('modal');
+		const closeModal = document.getElementById('closeModal');
+	  
+		// Open Modal
+		hamburger.addEventListener('click', () => {
+		  modal.classList.remove('hidden');
+		});
+	  
+		// Close Modal
+		closeModal.addEventListener('click', () => {
+		  modal.classList.add('hidden');
+		});
+	  
+		// Close Modal on Outside Click
+		modal.addEventListener('click', (event) => {
+		  if (event.target === modal) {
+			modal.classList.add('hidden');
+		  }
+		});
+	  </script>
+	
 </html>
