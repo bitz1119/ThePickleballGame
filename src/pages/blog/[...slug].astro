@@ -19,13 +19,13 @@ if (!post) {
 <Layout title={post.title}>
   <div class="max-w-4xl mx-auto px-4">
     <article class="prose lg:prose-xl">
-      <h1>{post.title}</h1>
-      <div class="text-gray-600 mb-8">
+      <h1 class="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text" >{post.title}</h1>
+      <div class="text-white mb-8">
         <span>{post.author}</span>
-        <span class="mx-2">•</span>
+        <span class="text-white mx-2">•</span>
         <span>{new Date(post.date).toLocaleDateString()}</span>
       </div>
-      <div class="whitespace-pre-wrap">{post.body}</div>
+      <div class="text-white whitespace-pre-wrap">{post.body}</div>
     </article>
   </div>
 </Layout>
