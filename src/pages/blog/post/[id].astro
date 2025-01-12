@@ -2,8 +2,14 @@
 import Layout from '../../../layouts/Layout.astro';
 import { blogPosts } from '../../../data/blogPosts';
 
-const { id } = Astro.params;
-const post = blogPosts.find(p => p.id === parseInt(id));
+export function getStaticPaths() {
+  return blogPosts.map(post => ({
+    params: { id: post.id.toString() },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
 
 if (!post) {
   return Astro.redirect('/404');
@@ -12,9 +18,9 @@ if (!post) {
 
 <Layout title={post.title}>
   <div class="max-w-4xl mx-auto px-4">
-    <article class="prose lg:prose-xl">
+    <article class="prose lg:prose-xl prose-invert">
       <h1>{post.title}</h1>
-      <div class="text-gray-600 mb-8">
+      <div class="text-gray-400 mb-8">
         <span>{post.author}</span>
         <span class="mx-2">•</span>
         <span>{new Date(post.date).toLocaleDateString()}</span>
