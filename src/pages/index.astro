@@ -1,9 +1,11 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
 ---
 
 <Layout title="welcome">
-  <div class="bg-gradient-to-r from-purple-900 via-pink-900 to-blue-900 min-h-screen text-white">
+  <div
+    class="bg-gradient-to-r from-purple-900 via-pink-900 to-blue-900 min-h-screen text-white"
+  >
     <!-- Hero Section -->
     <!-- <section class="max-w-6xl mx-auto text-center py-20">
       <h1 class="text-5xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text">
@@ -22,32 +24,46 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </section> -->
 
-	<!-- Hero Section -->
-  <section class="max-w-6xl mx-auto py-20 flex flex-col md:flex-row items-center">
-	<!-- Text Content -->
-	<div class="text-center md:text-left md:w-1/2 px-4">
-	  <h1 class="text-5xl font-extrabold bg-gradient-to-r text-white text-transparent bg-clip-text">
-		Master the Game of Pickleball
-	  </h1>
-	  <p class="mt-4 text-lg text-gray-300">
-		Join the fastest-growing sport in America. Learn, play, and excel with our comprehensive guide to pickleball.
-	  </p>
-	  <div class="mt-8 flex justify-center md:justify-start space-x-4">
-		<a href="/get-started" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300">
-		  Get Started
-		</a>
-		<a href="/blog" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300">
-		  Learn More
-		</a>
-	  </div>
-	</div>
-  
-	<!-- Image Content -->
-	<div class="mt-10 md:mt-0 md:w-1/2 flex justify-center">
-	  <img src="/demopickleball.jpg" alt="Pickleball Game" class="rounded-lg shadow-lg">
-	</div>
-  </section>
-  
+    <!-- Hero Section -->
+    <section
+      class="max-w-6xl mx-auto py-20 flex flex-col md:flex-row items-center"
+    >
+      <!-- Text Content -->
+      <div class="text-center md:text-left md:w-1/2 px-4">
+        <h1
+          class="text-5xl font-extrabold bg-gradient-to-r text-white text-transparent bg-clip-text"
+        >
+          Master the Game of Pickleball
+        </h1>
+        <p class="mt-4 text-lg text-gray-300">
+          Join the fastest-growing sport in America. Learn, play, and excel with
+          our comprehensive guide to pickleball.
+        </p>
+        <div class="mt-8 flex justify-center md:justify-start space-x-4">
+          <a
+            href="/get-started"
+            class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300"
+          >
+            Get Started
+          </a>
+          <a
+            href="/blog"
+            class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300"
+          >
+            Learn More
+          </a>
+        </div>
+      </div>
+
+      <!-- Image Content -->
+      <div class="mt-10 md:mt-0 md:w-1/2 flex justify-center">
+        <img
+          src="/demopickleball.jpg"
+          alt="Pickleball Game"
+          class="rounded-lg shadow-lg"
+        />
+      </div>
+    </section>
 
     <!-- Stats Section -->
     <section class="py-12">
@@ -71,320 +87,507 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </section>
 
-   <!-- discovery section -->
-   <section class="py-12 bg-[#121212]">
-	   <div class="max-w-6xl mx-auto text-center">
-		<h2 class="text-3xl font-bold text-pink-500 mb-8">Discover Pickleball</h2>
-	  <!-- Heading -->
-	  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-		<!-- Left Section -->
-		<div class="bg-[#1E1E1E] p-8 rounded-xl shadow-lg border border-gray-700">
-		  <h2 class="text-3xl font-bold text-pink-400 mb-4">What is Pickleball?</h2>
-		  <p class="text-gray-300">
-			Pickleball is a dynamic paddleball sport that perfectly blends elements of tennis, badminton, and table tennis. Played on a compact court with a lower net, it offers an accessible yet exciting experience for players of all skill levels.
-		  </p>
-		  <ul class="mt-6 space-y-4">
-			<li class="flex items-center text-gray-300">
-			  <span class="w-4 h-4 bg-pink-400 rounded-full mr-4"></span>
-			  Smaller court size (20' x 44')
-			</li>
-			<li class="flex items-center text-gray-300">
-			  <span class="w-4 h-4 bg-purple-400 rounded-full mr-4"></span>
-			  Lower net height (34 inches)
-			</li>
-			<li class="flex items-center text-gray-300">
-			  <span class="w-4 h-4 bg-blue-400 rounded-full mr-4"></span>
-			  Unique scoring system
-			</li>
-		  </ul>
-		</div>
-  
-		<!-- Right Section -->
-		<div class="bg-[#1E1E1E] p-8 rounded-xl shadow-lg border border-gray-700">
-		  <h2 class="text-3xl font-bold text-pink-400 mb-4">Why Choose Pickleball?</h2>
-		  <div class="grid grid-cols-2 gap-6 mt-4">
-			<div class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md">
-			  <div class="text-yellow-400 text-4xl mb-2">🏃‍♂️</div>
-			  <h3 class="text-lg font-bold text-gray-200">Active Lifestyle</h3>
-			  <p class="text-gray-400 text-center text-sm">Great cardio workout for all fitness levels</p>
-			</div>
-			<div class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md">
-			  <div class="text-purple-400 text-4xl mb-2">👥</div>
-			  <h3 class="text-lg font-bold text-gray-200">Social Sport</h3>
-			  <p class="text-gray-400 text-center text-sm">Build friendships and community</p>
-			</div>
-			<div class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md">
-			  <div class="text-red-400 text-4xl mb-2">🎯</div>
-			  <h3 class="text-lg font-bold text-gray-200">Easy to Learn</h3>
-			  <p class="text-gray-400 text-center text-sm">Quick learning curve for beginners</p>
-			</div>
-			<div class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md">
-			  <div class="text-yellow-400 text-4xl mb-2">⭐</div>
-			  <h3 class="text-lg font-bold text-gray-200">All Ages</h3>
-			  <p class="text-gray-400 text-center text-sm">Perfect for families and seniors</p>
-			</div>
-		  </div>
-		</div>
-	  </div>
-	</div>
-  </section>
+    <!-- discovery section -->
+    <section class="py-12 bg-[#121212]">
+      <div class="max-w-6xl mx-auto text-center">
+        <h2 class="text-3xl font-bold text-pink-500 mb-8">
+          Discover Pickleball
+        </h2>
+        <!-- Heading -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Left Section -->
+          <div
+            class="bg-[#1E1E1E] p-8 rounded-xl shadow-lg border border-gray-700"
+          >
+            <h2 class="text-3xl font-bold text-pink-400 mb-4">
+              What is Pickleball?
+            </h2>
+            <p class="text-gray-300">
+              Pickleball is a dynamic paddleball sport that perfectly blends
+              elements of tennis, badminton, and table tennis. Played on a
+              compact court with a lower net, it offers an accessible yet
+              exciting experience for players of all skill levels.
+            </p>
+            <ul class="mt-6 space-y-4">
+              <li class="flex items-center text-gray-300">
+                <span class="w-4 h-4 bg-pink-400 rounded-full mr-4"></span>
+                Smaller court size (20' x 44')
+              </li>
+              <li class="flex items-center text-gray-300">
+                <span class="w-4 h-4 bg-purple-400 rounded-full mr-4"></span>
+                Lower net height (34 inches)
+              </li>
+              <li class="flex items-center text-gray-300">
+                <span class="w-4 h-4 bg-blue-400 rounded-full mr-4"></span>
+                Unique scoring system
+              </li>
+            </ul>
+          </div>
 
-  <!-- Getting Started Section -->
-  <section class="bg-black py-10">
-	<div class="container mx-auto text-center">
-	  <!-- Heading with underline -->
-	  <h2 class="text-4xl font-bold text-pink-500 mb-6">Getting Started with Pickleball</h2>
-	  <div class="border-b-2 border-pink-500 w-24 mx-auto mb-10"></div>
-  
-	  <!-- Card Grid -->
-	  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
-		<!-- Equipment Guide -->
-		<div class=" bg-[#1E1E1E] text-purple-300 p-6 rounded-lg shadow-md transform transition hover:scale-105">
-		  <div class="flex items-center justify-center text-4xl text-purple-500 mb-6">
-			<i class="ri-folder-open-line"></i>
-		  </div>
-		  <h3 class="text-xl font-bold text-purple-400 mb-4">Equipment Guide</h3>
-		  <ul class="text-left space-y-2 text-sm">
-			<li>✓ Paddle selection tips</li>
-			<li>✓ Ball specifications</li>
-			<li>✓ Court equipment</li>
-		  </ul>
-		  <a href="#" class="text-purple-400 mt-4 inline-block hover:underline text-sm">Learn more →</a>
-		</div>
-  
-		<!-- Rules & Scoring -->
-		<div class="bg-[#1E1E1E] text-pink-300 p-6 rounded-lg shadow-md transform transition hover:scale-105">
-		  <div class="flex items-center justify-center text-4xl text-pink-500 mb-6">
-			<i class="ri-settings-5-line"></i>
-		  </div>
-		  <h3 class="text-xl font-bold text-pink-400 mb-4">Rules & Scoring</h3>
-		  <ul class="text-left space-y-2 text-sm">
-			<li>✓ Basic rules overview</li>
-			<li>✓ Scoring system</li>
-			<li>✓ Court layout</li>
-		  </ul>
-		  <a href="#" class="text-pink-400 mt-4 inline-block hover:underline text-sm">Learn more →</a>
-		</div>
-  
-		<!-- Basic Techniques -->
-		<div class="bg-[#1E1E1E] text-blue-300 p-6 rounded-lg shadow-md transform transition hover:scale-105">
-		  <div class="flex items-center justify-center text-4xl text-blue-500 mb-6">
-			<i class="ri-flashlight-line"></i>
-		  </div>
-		  <h3 class="text-xl font-bold text-blue-400 mb-4">Basic Techniques</h3>
-		  <ul class="text-left space-y-2 text-sm">
-			<li>✓ Serving techniques</li>
-			<li>✓ Basic shots</li>
-			<li>✓ Court positioning</li>
-		  </ul>
-		  <a href="#" class="text-blue-400 mt-4 inline-block hover:underline text-sm">Learn more →</a>
-		</div>
-	  </div>
-  
-	  <!-- Call to Action Button -->
-	  <button class="mt-12 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white text-lg px-8 py-3 rounded-full shadow-lg transform transition hover:scale-105 hover:shadow-2xl">
-		Start Your Journey →
-	  </button>
-	</div>
-  </section>
-  
-  <!-- benefits section -->
-  <section class="bg-black py-10">
-	<div class="container mx-auto text-center px-4 md:px-8">
-	  <!-- Section Title -->
-	  <h2 class="text-3xl md:text-4xl font-bold text-pink-500 mb-4">Benefits of Pickleball</h2>
-	  <div class="border-b-2 border-gradient-to-r from-purple-500 to-blue-500 w-20 md:w-32 mx-auto mb-10"></div>
-  
-	  <!-- Benefit Cards -->
-	  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-		<!-- Physical Health Card -->
-		<div class="bg-[#1E1E1E] text-purple-300 p-6 rounded-lg shadow-md">
-		  <div class="text-3xl md:text-4xl mb-4">
-			<span class="text-yellow-400">🏃‍♂️</span>
-		  </div>
-		  <h3 class="text-xl md:text-2xl font-bold text-purple-400 mb-3">Physical Health</h3>
-		  <ul class="text-left space-y-2 text-sm md:text-base">
-			<li>✓ Improves cardiovascular health</li>
-			<li>✓ Enhances balance and agility</li>
-			<li>✓ Low-impact exercise option</li>
-		  </ul>
-		</div>
-  
-		<!-- Social Benefits Card -->
-		<div class="bg-[#1E1E1E] text-pink-300 p-6 rounded-lg shadow-md">
-		  <div class="text-3xl md:text-4xl mb-4">
-			<span class="text-yellow-400">🤝</span>
-		  </div>
-		  <h3 class="text-xl md:text-2xl font-bold text-pink-400 mb-3">Social Benefits</h3>
-		  <ul class="text-left space-y-2 text-sm md:text-base">
-			<li>✓ Build lasting friendships</li>
-			<li>✓ Community engagement</li>
-			<li>✓ Family-friendly activity</li>
-		  </ul>
-		</div>
-  
-		<!-- Mental Wellness Card -->
-		<div class="bg-[#1E1E1E] text-blue-300 p-6 rounded-lg shadow-md">
-		  <div class="text-3xl md:text-4xl mb-4">
-			<span class="text-pink-400">🧠</span>
-		  </div>
-		  <h3 class="text-xl md:text-2xl font-bold text-blue-400 mb-3">Mental Wellness</h3>
-		  <ul class="text-left space-y-2 text-sm md:text-base">
-			<li>✓ Reduces stress and anxiety</li>
-			<li>✓ Boosts cognitive function</li>
-			<li>✓ Increases mental focus</li>
-		  </ul>
-		</div>
-	  </div>
-  
-	  <!-- Statistics Section -->
-	  <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
-		<div>
-		  <p class="text-4xl md:text-5xl font-bold text-pink-500">300%</p>
-		  <p class="text-xs md:text-sm">Growth Rate Since 2019</p>
-		</div>
-		<div>
-		  <p class="text-4xl md:text-5xl font-bold text-purple-500">4.8M</p>
-		  <p class="text-xs md:text-sm">Active Players</p>
-		</div>
-		<div>
-		  <p class="text-4xl md:text-5xl font-bold text-blue-500">35+</p>
-		  <p class="text-xs md:text-sm">Average Age Range</p>
-		</div>
-		<div>
-		  <p class="text-4xl md:text-5xl font-bold text-pink-500">9,000+</p>
-		  <p class="text-xs md:text-sm">Registered Facilities</p>
-		</div>
-	  </div>
-	</div>
-  </section>
+          <!-- Right Section -->
+          <div
+            class="bg-[#1E1E1E] p-8 rounded-xl shadow-lg border border-gray-700"
+          >
+            <h2 class="text-3xl font-bold text-pink-400 mb-4">
+              Why Choose Pickleball?
+            </h2>
+            <div class="grid grid-cols-2 gap-6 mt-4">
+              <div
+                class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md"
+              >
+                <div class="text-yellow-400 text-4xl mb-2">🏃‍♂️</div>
+                <h3 class="text-lg font-bold text-gray-200">
+                  Active Lifestyle
+                </h3>
+                <p class="text-gray-400 text-center text-sm">
+                  Great cardio workout for all fitness levels
+                </p>
+              </div>
+              <div
+                class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md"
+              >
+                <div class="text-purple-400 text-4xl mb-2">👥</div>
+                <h3 class="text-lg font-bold text-gray-200">Social Sport</h3>
+                <p class="text-gray-400 text-center text-sm">
+                  Build friendships and community
+                </p>
+              </div>
+              <div
+                class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md"
+              >
+                <div class="text-red-400 text-4xl mb-2">🎯</div>
+                <h3 class="text-lg font-bold text-gray-200">Easy to Learn</h3>
+                <p class="text-gray-400 text-center text-sm">
+                  Quick learning curve for beginners
+                </p>
+              </div>
+              <div
+                class="flex flex-col items-center bg-[#292929] p-4 rounded-lg shadow-md"
+              >
+                <div class="text-yellow-400 text-4xl mb-2">⭐</div>
+                <h3 class="text-lg font-bold text-gray-200">All Ages</h3>
+                <p class="text-gray-400 text-center text-sm">
+                  Perfect for families and seniors
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <!-- Basic Techniques -->  
-  <section class="bg-black text-white py-12 px-6">
-	<h1 class="text-center text-3xl font-bold text-pink-500 mb-8">Basic Techniques & Strategies</h1>
-  
-	<!-- Main Cards Section -->
-	<div class="flex flex-col md:flex-row gap-6 justify-center items-center">
-	  <!-- Card 1: Serving Techniques -->
-	  <div class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center">
-		<div class="text-pink-500 text-4xl mb-4">
-		  <span>⚡</span>
-		</div>
-		<h2 class="text-xl font-bold text-pink-500 mb-4">Serving Techniques</h2>
-		<ul class="text-sm space-y-2">
-		  <li>• Underhand serve below waist level</li>
-		  <li>• Contact point in front of body</li>
-		  <li>• Aim for deep placement</li>
-		</ul>
-	  </div>
-  
-	  <!-- Card 2: Basic Shots -->
-	  <div class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center">
-		<div class="text-pink-500 text-4xl mb-4">
-		  <span>🛡️</span>
-		</div>
-		<h2 class="text-xl font-bold text-pink-500 mb-4">Basic Shots</h2>
-		<ul class="text-sm space-y-2">
-		  <li>• Dink shots - soft and controlled</li>
-		  <li>• Volley - hit ball in air</li>
-		  <li>• Ground strokes with control</li>
-		</ul>
-	  </div>
-  
-	  <!-- Card 3: Strategy Tips -->
-	  <div class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center">
-		<div class="text-blue-500 text-4xl mb-4">
-		  <span>📖</span>
-		</div>
-		<h2 class="text-xl font-bold text-blue-500 mb-4">Strategy Tips</h2>
-		<ul class="text-sm space-y-2">
-		  <li>• Stay at non-volley zone line</li>
-		  <li>• Communication with partner</li>
-		  <li>• Patient shot selection</li>
-		</ul>
-	  </div>
-	</div>
-  
-	<!-- Pro Tips Section -->
-	<div class="mt-12 bg-black rounded-lg p-6">
+    <!-- Getting Started Section -->
+    <section class="bg-black py-10">
+      <div class="container mx-auto text-center">
+        <!-- Heading with underline -->
+        <h2 class="text-4xl font-bold text-pink-500 mb-6">
+          Getting Started with Pickleball
+        </h2>
+        <div class="border-b-2 border-pink-500 w-24 mx-auto mb-10"></div>
+
+        <!-- Card Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
+          <!-- Equipment Guide -->
+          <div
+            class="bg-[#1E1E1E] text-purple-300 p-6 rounded-lg shadow-md transform transition hover:scale-105"
+          >
+            <div
+              class="flex items-center justify-center text-4xl text-purple-500 mb-6"
+            >
+              <i class="ri-folder-open-line"></i>
+            </div>
+            <h3 class="text-xl font-bold text-purple-400 mb-4">
+              Equipment Guide
+            </h3>
+            <ul class="text-left space-y-2 text-sm">
+              <li>✓ Paddle selection tips</li>
+              <li>✓ Ball specifications</li>
+              <li>✓ Court equipment</li>
+            </ul>
+            <a
+              href="/equipment"
+              class="text-purple-400 mt-4 inline-block hover:underline text-sm"
+              >Learn more →</a
+            >
+          </div>
+
+          <!-- Rules & Scoring -->
+          <div
+            class="bg-[#1E1E1E] text-pink-300 p-6 rounded-lg shadow-md transform transition hover:scale-105"
+          >
+            <div
+              class="flex items-center justify-center text-4xl text-pink-500 mb-6"
+            >
+              <i class="ri-settings-5-line"></i>
+            </div>
+            <h3 class="text-xl font-bold text-pink-400 mb-4">
+              Rules & Scoring
+            </h3>
+            <ul class="text-left space-y-2 text-sm">
+              <li>✓ Basic rules overview</li>
+              <li>✓ Scoring system</li>
+              <li>✓ Court layout</li>
+            </ul>
+            <a
+              href="/rules"
+              class="text-pink-400 mt-4 inline-block hover:underline text-sm"
+              >Learn more →</a
+            >
+          </div>
+
+          <!-- Basic Techniques -->
+          <div
+            class="bg-[#1E1E1E] text-blue-300 p-6 rounded-lg shadow-md transform transition hover:scale-105"
+          >
+            <div
+              class="flex items-center justify-center text-4xl text-blue-500 mb-6"
+            >
+              <i class="ri-flashlight-line"></i>
+            </div>
+            <h3 class="text-xl font-bold text-blue-400 mb-4">
+              Basic Techniques
+            </h3>
+            <ul class="text-left space-y-2 text-sm">
+              <li>✓ Serving techniques</li>
+              <li>✓ Basic shots</li>
+              <li>✓ Court positioning</li>
+            </ul>
+            <a
+              href="/techniques"
+              class="text-blue-400 mt-4 inline-block hover:underline text-sm"
+              >Learn more →</a
+            >
+          </div>
+        </div>
+
+        <!-- Call to Action Button -->
+        <a href="/courses">
+          <button
+            class="mt-12 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white text-lg px-8 py-3 rounded-full shadow-lg transform transition hover:scale-105 hover:shadow-2xl"
+          >
+            Start Your Journey →
+          </button>
+        </a>
+      </div>
+    </section>
+
+    <!-- benefits section -->
+    <section class="bg-black py-10">
+      <div class="container mx-auto text-center px-4 md:px-8">
+        <!-- Section Title -->
+        <h2 class="text-3xl md:text-4xl font-bold text-pink-500 mb-4">
+          Benefits of Pickleball
+        </h2>
+        <div
+          class="border-b-2 border-gradient-to-r from-purple-500 to-blue-500 w-20 md:w-32 mx-auto mb-10"
+        >
+        </div>
+
+        <!-- Benefit Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Physical Health Card -->
+          <div class="bg-[#1E1E1E] text-purple-300 p-6 rounded-lg shadow-md">
+            <div class="text-3xl md:text-4xl mb-4">
+              <span class="text-yellow-400">🏃‍♂️</span>
+            </div>
+            <h3 class="text-xl md:text-2xl font-bold text-purple-400 mb-3">
+              Physical Health
+            </h3>
+            <ul class="text-left space-y-2 text-sm md:text-base">
+              <li>✓ Improves cardiovascular health</li>
+              <li>✓ Enhances balance and agility</li>
+              <li>✓ Low-impact exercise option</li>
+            </ul>
+          </div>
+
+          <!-- Social Benefits Card -->
+          <div class="bg-[#1E1E1E] text-pink-300 p-6 rounded-lg shadow-md">
+            <div class="text-3xl md:text-4xl mb-4">
+              <span class="text-yellow-400">🤝</span>
+            </div>
+            <h3 class="text-xl md:text-2xl font-bold text-pink-400 mb-3">
+              Social Benefits
+            </h3>
+            <ul class="text-left space-y-2 text-sm md:text-base">
+              <li>✓ Build lasting friendships</li>
+              <li>✓ Community engagement</li>
+              <li>✓ Family-friendly activity</li>
+            </ul>
+          </div>
+
+          <!-- Mental Wellness Card -->
+          <div class="bg-[#1E1E1E] text-blue-300 p-6 rounded-lg shadow-md">
+            <div class="text-3xl md:text-4xl mb-4">
+              <span class="text-pink-400">🧠</span>
+            </div>
+            <h3 class="text-xl md:text-2xl font-bold text-blue-400 mb-3">
+              Mental Wellness
+            </h3>
+            <ul class="text-left space-y-2 text-sm md:text-base">
+              <li>✓ Reduces stress and anxiety</li>
+              <li>✓ Boosts cognitive function</li>
+              <li>✓ Increases mental focus</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div
+          class="mt-12 ml-20 mr-20 grid grid-cols-2 gap-6 rounded-full bg-gradient-to-br from-gray-900 to-black text-center text-white md:grid-cols-4"
+        >
+          <div class="p-6">
+            <p class="text-4xl font-bold text-pink-400 md:text-5xl">300%</p>
+            <p class="text-sm md:text-base text-white">
+              Growth Rate Since 2019
+            </p>
+          </div>
+          <div class="p-6">
+            <p class="text-4xl font-bold text-purple-400 md:text-5xl">4.8M</p>
+            <p class="text-sm md:text-base text-white">Active Players</p>
+          </div>
+          <div class="p-6">
+            <p class="text-4xl font-bold text-blue-400 md:text-5xl">35+</p>
+            <p class="text-sm md:text-base text-white">Average Age Range</p>
+          </div>
+          <div class="p-6">
+            <p class="text-4xl font-bold text-pink-400 md:text-5xl">9,000+</p>
+            <p class="text-sm md:text-base text-white">Registered Facilities</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Basic Techniques -->
+    <section class="bg-black text-white py-12 px-6">
+      <h1 class="text-center text-3xl font-bold text-pink-500 mb-8">
+        Basic Techniques & Strategies
+      </h1>
+
+      <!-- Main Cards Section -->
+      <div class="flex flex-col md:flex-row gap-6 justify-center items-center">
+        <!-- Card 1: Serving Techniques -->
+        <div
+          class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
+        >
+          <div class="text-pink-500 text-4xl mb-4">
+            <span>⚡</span>
+          </div>
+          <h2 class="text-xl font-bold text-pink-500 mb-4">
+            Serving Techniques
+          </h2>
+          <ul class="text-sm space-y-2">
+            <li>• Underhand serve below waist level</li>
+            <li>• Contact point in front of body</li>
+            <li>• Aim for deep placement</li>
+          </ul>
+        </div>
+
+        <!-- Card 2: Basic Shots -->
+        <div
+          class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
+        >
+          <div class="text-pink-500 text-4xl mb-4">
+            <span>🛡️</span>
+          </div>
+          <h2 class="text-xl font-bold text-pink-500 mb-4">Basic Shots</h2>
+          <ul class="text-sm space-y-2">
+            <li>• Dink shots - soft and controlled</li>
+            <li>• Volley - hit ball in air</li>
+            <li>• Ground strokes with control</li>
+          </ul>
+        </div>
+
+        <!-- Card 3: Strategy Tips -->
+        <div
+          class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
+        >
+          <div class="text-blue-500 text-4xl mb-4">
+            <span>📖</span>
+          </div>
+          <h2 class="text-xl font-bold text-blue-500 mb-4">Strategy Tips</h2>
+          <ul class="text-sm space-y-2">
+            <li>• Stay at non-volley zone line</li>
+            <li>• Communication with partner</li>
+            <li>• Patient shot selection</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Pro Tips Section -->
+      <!-- <div class="mt-12 bg-black rounded-lg p-6">
 	  <h2 class="text-center text-2xl font-bold text-pink-500 mb-6">Pro Tips</h2>
-	  <div class="flex flex-col md:flex-row gap-6">
-		<!-- Pro Tip 1: Shot Selection -->
-		<div class="bg-[#1E1E1E] rounded-lg shadow-md p-4 w-full md:w-1/3 text-center">
+	  <div class="flex flex-col md:flex-row gap-6"> -->
+      <!-- Pro Tip 1: Shot Selection -->
+      <!-- <div class="bg-[#1E1E1E] rounded-lg shadow-md p-4 w-full md:w-1/3 text-center">
 		  <h3 class="text-lg font-bold text-pink-500 mb-2">Shot Selection</h3>
 		  <p class="text-sm">Choose high-percentage shots over risky plays</p>
-		</div>
-		<!-- Pro Tip 2: Positioning -->
-		<div class="bg-[#1E1E1E] rounded-lg shadow-md p-4 w-full md:w-1/3 text-center">
+		</div> -->
+      <!-- Pro Tip 2: Positioning -->
+      <!-- <div class="bg-[#1E1E1E] rounded-lg shadow-md p-4 w-full md:w-1/3 text-center">
 		  <h3 class="text-lg font-bold text-pink-500 mb-2">Positioning</h3>
 		  <p class="text-sm">Ready position between each shot</p>
-		</div>
-		<!-- Pro Tip 3: Movement -->
-		<div class="bg-[#1E1E1E] rounded-lg shadow-md p-4 w-full md:w-1/3 text-center">
+		</div> -->
+      <!-- Pro Tip 3: Movement -->
+      <!-- <div class="bg-[#1E1E1E] rounded-lg shadow-md p-4 w-full md:w-1/3 text-center">
 		  <h3 class="text-lg font-bold text-pink-500 mb-2">Movement</h3>
 		  <p class="text-sm">Quick, small steps for better control</p>
 		</div>
 	  </div>
-	</div>
-  </section>
-  
+	 </div> -->
+    </section>
 
-  <!-- Testimonial Section -->
-  <section class="bg-black text-white py-12 px-6">
-	<h1 class="text-center text-3xl font-bold text-pink-500 mb-8">Player Testimonials</h1>
-  
-	<!-- Testimonials Wrapper -->
-	<div class="flex flex-col md:flex-row gap-6 justify-center items-center">
-	  <!-- Testimonial 1 -->
-	  <div class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center">
-		<div class="flex justify-center mb-4">
-		  <div class="bg-pink-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold">
-			SJ
+    <!-- Video Section -->
+    <section
+      class="relative bg-gradient-to-b from-gray-900 to-black px-6 py-16 text-white"
+    >
+      <div
+        class="mx-auto flex max-w-7xl flex-col-reverse items-center gap-12 lg:flex-row lg:items-start"
+      >
+        <!-- Text Content -->
+        <div class="w-full text-center lg:w-1/2 lg:text-left">
+          <h2
+            class="mb-8 text-3xl font-bold text-pink-500 md:text-4xl lg:text-5xl"
+          >
+            Experience the Thrill of Pickleball in Tampa Florida
+          </h2>
+          <p class="mb-8 text-lg text-gray-300 md:text-xl">
+            Discover the thrill of pickleball in Tampa, Florida, a vibrant hub
+            for players of all levels. With state-of-the-art courts, exciting
+            tournaments, and a welcoming community, Tampa is the ultimate
+            pickleball destination. Enjoy year-round play, improve your fitness,
+            and connect with others in this fast-growing sport under sunny
+            Florida skies!
+          </p>
+          <!-- Action Button -->
+          <div>
+            <a
+              href="/blog"
+              class="inline-block rounded-lg bg-pink-500 px-8 py-3 font-bold text-white shadow-lg transition duration-300 hover:bg-pink-600"
+            >
+              Discover Pickleball
+            </a>
+          </div>
+        </div>
+
+        <!-- Video Container -->
+        <div class="mx-auto w-full lg:w-1/2">
+          <div
+            class="overflow-hidden rounded-lg border-4 border-pink-500 shadow-lg"
+          >
+            <iframe
+              src="https://www.youtube.com/embed/zVGLtDlZQt0"
+              title="Pickleball Highlights"
+              class="h-[300px] w-full md:h-[220px] lg:h-[300px]"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decorative Elements -->
+      <div
+        class="pointer-events-none absolute left-0 top-0 h-full w-1/3 bg-gradient-to-r from-pink-500 to-transparent opacity-30"
+      >
+      </div>
+      <div
+        class="pointer-events-none absolute bottom-0 right-0 h-full w-1/3 bg-gradient-to-l from-pink-500 to-transparent opacity-30"
+      >
+      </div>
+    </section>
+
+    <!-- Testimonial Section -->
+    <section class="bg-black text-white py-12 px-6">
+      <h1 class="text-center text-3xl font-bold text-pink-500 mb-8">
+        Player Testimonials
+      </h1>
+
+      <!-- Testimonials Wrapper -->
+      <div class="flex flex-col md:flex-row gap-6 justify-center items-center">
+        <!-- Testimonial 1 -->
+        <div
+          class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
+        >
+          <div class="flex justify-center mb-2">
+            <!-- User's profile image from X.com (formerly Twitter) -->
+            <img
+              src="https://pbs.twimg.com/profile_images/1744067778712059904/S3upteq5_400x400.jpg"
+              alt="User Profile"
+              class="rounded-full w-1/6 h-1/6 object-cover"
+            />
+          </div>
+
+          <!-- Embedded Tweet Section -->
+          <div class="text-white p-4 rounded-lg border border-gray-700 mb-4">
+            <blockquote class="twitter-tweet">
+              <a href="https://x.com/Diana_Sierra__/status/1809713132765335657">
+                <p lang="en" dir="ltr">
+                  Milagro is the host city for the #PickellBall 2024 tournament
+                  🎾 that brings together athletes from Ecuador 🇪🇨 and the
+                  United States 🇺🇸. It is an honor for our canton to host
+                  sporting events that promote tourism and boost the economy.
+                  3:46 AM · Jul 7, 2024
+                </p>
+              </a>
+            </blockquote>
+          </div>
+
+          <p class="font-bold text-purple-400">Diana Sierra</p>
+          <p class="text-xs text-gray-400">Vice Mayor of Milagro.</p>
+        </div>
+
+        <!-- Testimonial 2 -->
+		<div class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center">
+			<div class="flex justify-center mb-2">
+			  <!-- User's profile image from X.com (formerly Twitter) -->
+			  <img src="https://pbs.twimg.com/profile_images/1757141506882670592/wgJqBWey_400x400.jpg" alt="User Profile" class="rounded-full w-1/6 h-1/6 object-cover">
+			</div>
+			
+			<!-- Embedded Tweet Section -->
+			<div class="text-white p-4 rounded-lg border border-gray-700 mb-4">
+			  <blockquote class="twitter-tweet">
+				<a href="https://x.com/icyconnor1/status/1673839586013769728">
+				<p lang="en" dir="ltr">
+				  “Junior is for recruiting, June is one of the biggest months for recruiting. It’s the start of a big summer recruiting season” jd pickell knows ball. Florida state fans who say June rankings/commits don’t matter don’t know ball. Jd pickell is verified in my books ✅
+				  5:13 AM · Jun 28, 2023
+				</p>
+				</a>
+			  </blockquote>
+			</div>
+		  
+			<p class="font-bold text-purple-400">icyconnor1</p>
 		  </div>
-		</div>
-		<p class="text-sm mb-4">"Pickleball has transformed my retirement. It's the perfect blend of exercise and social interaction. The community is incredibly welcoming!"</p>
-		<p class="font-bold text-purple-400">Sarah Johnson</p>
-		<p class="text-xs text-gray-400">Retired Teacher, 65</p>
-	  </div>
-  
-	  <!-- Testimonial 2 -->
-	  <div class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center">
-		<div class="flex justify-center mb-4">
-		  <div class="bg-pink-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold">
-			MP
+		  
+		  
+
+        <!-- Testimonial 3 -->
+		<div class="w-full rounded-lg bg-[#1E1E1E] p-6 text-center shadow-md md:w-1/3">
+			<div class="mb-2 flex justify-center">
+			  <!-- User's profile image from X.com (formerly Twitter) -->
+			  <img src="https://pbs.twimg.com/profile_images/1668718669663203328/AtZHwMsm_400x400.jpg" alt="User Profile" class="h-1/6 w-1/6 rounded-full object-cover" />
+			</div>
+		  
+			<!-- Embedded Tweet Section -->
+			<div class="mb-4 rounded-lg border border-gray-700 p-4 text-white">
+			  <blockquote class="twitter-tweet">
+				<a href="https://x.com/jdpickell/status/1847789491802579125">
+				  <p lang="en" dir="ltr">The thing that’s encouraging if you’re Tennessee, you played nowhere near your best ball and still beat Alabama 5:28 AM · Oct 20, 2024</p>
+				</a>
+				<a class="text-blue-700" href="http://www.youtube.com/on3sports">https://www.youtube.com/on3sports</a>
+			  </blockquote>
+			</div>
+		  
+			<p class="font-bold text-purple-400">jdpickell</p>
+			<p class="text-xs text-gray-400">run into a Savior true and shake hands laughing.</p>
 		  </div>
-		</div>
-		<p class="text-sm mb-4">"I was looking for a fun way to stay active and found pickleball. It's easy to learn but challenging to master. I'm hooked!"</p>
-		<p class="font-bold text-purple-400">Mike Peterson</p>
-		<p class="text-xs text-gray-400">Software Developer, 32</p>
-	  </div>
-  
-	  <!-- Testimonial 3 -->
-	  <div class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center">
-		<div class="flex justify-center mb-4">
-		  <div class="bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold">
-			AL
-		  </div>
-		</div>
-		<p class="text-sm mb-4">"As a former tennis player, I was skeptical at first. Now I play pickleball three times a week. It's addictively fun!"</p>
-		<p class="font-bold text-purple-400">Amy Liu</p>
-		<p class="text-xs text-gray-400">Physical Therapist, 45</p>
-	  </div>
-	</div>
-  
-	<!-- Rating Section -->
-	<div class="mt-10 text-center">
-	  <div class="flex justify-center items-center gap-1 text-yellow-400 text-3xl">
-		<span>★</span>
-		<span>★</span>
-		<span>★</span>
-		<span>★</span>
-		<span>★</span>
-	  </div>
-	  <p class="text-2xl font-bold mt-2">4.9 out of 5</p>
-	  <p class="text-sm text-gray-400">Based on 500+ player reviews</p>
-	</div>
-  </section>
-  
+		  
+
+        <!-- Include Twitter Embed Script -->
+        <script
+          async
+          src="https://platform.twitter.com/widgets.js"
+          charset="utf-8"></script>
+      </div>
+    </section>
   </div>
 </Layout>
