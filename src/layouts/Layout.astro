@@ -3,7 +3,7 @@ interface Props {
   title: string;
 }
 
-const { title }  = { title: "The Complete Guide to Pickleball"};
+const { title } = { title: "The Complete Guide to Pickleball" };
 ---
 
 <!doctype html>
@@ -18,110 +18,152 @@ const { title }  = { title: "The Complete Guide to Pickleball"};
   </head>
   <body class="bg-gradient-to-br bg-[#1E1E1E] text-gray-100 min-h-screen">
     <header class="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
-      <nav class="max-w-6xl mx-auto px-4 py-6">
-        <ul class="flex space-x-6">
+      <nav class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+			  <!-- Logo or Title -->
+			  <div class="flex items-center">
+				<img src="/public/logo.png" alt="Logo" class="w-10 h-10 mr-3">
+				<span class="text-white text-lg font-bold">
+				  <a href="/">Pickleball Info</a>
+				</span>
+			  </div>
+		  
+			  <!-- Hamburger Icon -->
+			  <button id="hamburger" class="lg:hidden text-white text-2xl focus:outline-none">
+				☰
+			  </button>
+		  
+			  <!-- Navigation Links (Desktop) -->
+			  <ul class="hidden lg:flex space-x-6">
+				<li><a href="/" class="hover:text-white transition-colors">Home</a></li>
+				<li><a href="/blog" class="hover:text-white transition-colors">Blog</a></li>
+				<li><a href="/courses" class="hover:text-white transition-colors">Courses</a></li>
+				<li><a href="/equipment" class="hover:text-white transition-colors">Equipment</a></li>
+				<li><a href="/rules" class="hover:text-white transition-colors">Rules</a></li>
+				<li><a href="/techniques" class="hover:text-white transition-colors">Techniques</a></li>
+			  </ul>
+			</nav>
+		  </header>
+		  
+		  <!-- Modal -->
+		  <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
+			<div class="bg-white w-4/5 max-w-md rounded-lg p-6 text-center">
+			  <!-- Close Button -->
+			  <button id="closeModal" class="absolute top-4 right-4 text-2xl text-gray-500 hover:text-gray-700 focus:outline-none">
+				&times;
+			  </button>
+			  <ul class="space-y-4">
+				<li><a href="/" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Home</a></li>
+				<li><a href="/blog" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Blog</a></li>
+				<li><a href="/courses" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Courses</a></li>
+				<li><a href="/equipment" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Equipment</a></li>
+				<li><a href="/rules" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Rules</a></li>
+				<li><a href="/techniques" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Techniques</a></li>
+			  </ul>
+			</div>
+		  </div>
+		  
+  
+  </body>
+  <main class="py-8 px-4">
+    <slot />
+  </main>
+  <footer class="bg-[#1E1E1E] text-white py-8">
+    <div
+      class="container mx-auto text-center grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4"
+    >
+      <!-- Branding Section -->
+      <div>
+        <h2 class="text-xl font-semibold">Pickleball Guide</h2>
+        <p class="mt-2 text-sm">
+          Your comprehensive resource for learning and mastering the exciting
+          sport of pickleball.
+        </p>
+        <div class="flex space-x-4 mt-4">
+          <a href="#" class="text-white"><i class="fab fa-facebook"></i></a>
+          <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
+        </div>
+      </div>
+      <!-- Quick Links Section -->
+      <div>
+        <h3 class="text-lg font-semibold">Quick Links</h3>
+        <ul class="mt-2 space-y-1 text-sm">
           <li>
-            <a href="/" class="hover:text-white transition-colors">Home</a>
+            <a href="#" class="text-white hover:text-gray-300">About</a>
           </li>
           <li>
-            <a href="/blog" class="hover:text-white transition-colors">Blog</a>
+            <a href="#" class="text-white hover:text-gray-300">Benefits</a>
           </li>
           <li>
-            <a href="/courses" class="hover:text-white transition-colors"
-              >Courses</a>
+            <a href="#" class="text-white hover:text-gray-300">Equipment</a>
           </li>
           <li>
-            <a href="/equipment" class="hover:text-white transition-colors"
-              >Equipment</a>
-          </li>
-          <li>
-            <a href="/rules" class="hover:text-white transition-colors"
-              >Rules</a>
-          </li>
-          <li>
-            <a href="/techniques" class="hover:text-white transition-colors"
-              >Techniques</a>
+            <a href="#" class="text-white hover:text-gray-300">Rules</a>
           </li>
         </ul>
-      </nav>
-    </header>
-    <main class="py-8 px-4">
-      <slot />
-    </main>
-    <footer class="bg-[#1E1E1E] text-white py-8">
-      <div
-        class="container mx-auto text-center grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4"
-      >
-        <!-- Branding Section -->
-        <div>
-          <h2 class="text-xl font-semibold">Pickleball Guide</h2>
-          <p class="mt-2 text-sm">
-            Your comprehensive resource for learning and mastering the exciting
-            sport of pickleball.
-          </p>
-          <div class="flex space-x-4 mt-4">
-            <a href="#" class="text-white"><i class="fab fa-facebook"></i></a>
-            <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
-            <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
-          </div>
-        </div>
-        <!-- Quick Links Section -->
-        <div>
-          <h3 class="text-lg font-semibold">Quick Links</h3>
-          <ul class="mt-2 space-y-1 text-sm">
-            <li>
-              <a href="#" class="text-white hover:text-gray-300">About</a>
-            </li>
-            <li>
-              <a href="#" class="text-white hover:text-gray-300">Benefits</a>
-            </li>
-            <li>
-              <a href="#" class="text-white hover:text-gray-300">Equipment</a>
-            </li>
-            <li>
-              <a href="#" class="text-white hover:text-gray-300">Rules</a>
-            </li>
-          </ul>
-        </div>
-        <!-- Resources Section -->
-        <div>
-          <h3 class="text-lg font-semibold">Resources</h3>
-          <ul class="mt-2 space-y-1 text-sm">
-            <li>
-              <a href="#" class="text-white hover:text-gray-300">Techniques</a>
-            </li>
-            <li>
-              <a href="#" class="text-white hover:text-gray-300">Community</a>
-            </li>
-            <li><a href="#" class="text-white hover:text-gray-300">FAQs</a></li>
-            <li>
-              <a href="#" class="text-white hover:text-gray-300"
-                >Testimonials</a>
-            </li>
-          </ul>
-        </div>
-        <!-- Subscription Section -->
-        <div>
-          <h3 class="text-lg font-semibold">Stay Updated</h3>
-          <form class="mt-2">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              class="w-full p-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
-            />
-            <button
-              type="submit"
-              class="mt-2 w-full p-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded"
-              >Subscribe</button
-            >
-          </form>
-        </div>
       </div>
-      <div class="max-w-6xl mx-auto px-4 py-6 text-center">
-        <p>
-          &copy; {new Date().getFullYear()} Pickleball Guide. All rights reserved.
-        </p>
+      <!-- Resources Section -->
+      <div>
+        <h3 class="text-lg font-semibold">Resources</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li>
+            <a href="/techniques" class="text-white hover:text-gray-300">Techniques</a>
+          </li>
+          <li>
+            <a href="/blog" class="text-white hover:text-gray-300">Community</a>
+          </li>
+          <li><a href="/equipment" class="text-white hover:text-gray-300">Equipment</a></li>
+          <li>
+            <a href="/#testimonials" class="text-white hover:text-gray-300">Testimonials</a>
+          </li>
+        </ul>
       </div>
-    </footer>
-  </body>
+      <!-- Subscription Section -->
+      <div>
+        <h3 class="text-lg font-semibold">Stay Updated</h3>
+        <form class="mt-2">
+          <input
+            type="email"
+            placeholder="Enter your email"
+            class="w-full p-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <button
+            type="submit"
+            class="mt-2 w-full p-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded"
+            >Subscribe</button
+          >
+        </form>
+      </div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 py-6 text-center">
+      <p>
+        &copy; {new Date().getFullYear()} Pickleball Guide. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+		// Elements
+		const hamburger = document.getElementById('hamburger');
+		const modal = document.getElementById('modal');
+		const closeModal = document.getElementById('closeModal');
+	  
+		// Open Modal
+		hamburger.addEventListener('click', () => {
+		  modal.classList.remove('hidden');
+		});
+	  
+		// Close Modal
+		closeModal.addEventListener('click', () => {
+		  modal.classList.add('hidden');
+		});
+	  
+		// Close Modal on Outside Click
+		modal.addEventListener('click', (event) => {
+		  if (event.target === modal) {
+			modal.classList.add('hidden');
+		  }
+		});
+	  </script>
+  
 </html>
