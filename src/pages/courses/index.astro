@@ -1,27 +1,274 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { courses } from '../../data/courses';
+import { pickleballCourts } from '../../data/pickleballCourts';
+
+// Get unique states for filter
+const uniqueStates = [...new Set(pickleballCourts.map(court => court.state))];
+const ITEMS_PER_PAGE = 9;  // 3x3 grid
 ---
 
-<Layout title="Pickleball Courses">
-  <div class="max-w-6xl mx-auto">
-    <h1 class="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text">Pickleball Courses</h1>
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {courses.map((course) => (
-        <div class="bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl shadow-xl overflow-hidden border border-gray-700">
-          <div class="p-6">
-            <h2 class="text-xl font-bold mb-2 text-purple-400">{course.title}</h2>
-            <p class="text-gray-300 mb-4">{course.description}</p>
-            <p class="text-sm text-gray-400 mb-4">{course.lessons.length} Lessons</p>
-            <a 
-              href={`/courses/${course.id}`}
-              class="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors"
+<Layout title="Pickleball Courts">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8 text-center">Pickleball Courts</h1>
+    
+    <!-- Search and Filter Controls -->
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="searchInput"
+            placeholder="Search courts..." 
+            class="w-full p-2 pr-10 border border-pink-600 bg-slate-50 text-black rounded-lg shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          <svg 
+            class="absolute right-3 top-2.5 h-5 w-5 text-pink-600" 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 20 20" 
+            fill="currentColor"
+          >
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+          </svg>
+        </div>
+      </div>
+      
+      <div class="flex gap-4">
+        <select 
+          id="stateFilter" 
+          class="w-full md:w-48 p-2 border border-pink-600 text-pink-600 font-bold bg-slate-50 rounded-lg shadow-sm focus:border-pink-400 focus:ring-1 focus:ring-pink-400"
+        >
+          <option value="all">All Regions</option>
+          {uniqueStates.map(state => (
+            <option value={state}>{state}</option>
+          ))}
+        </select>
+        
+        <button 
+          id="resetFilters"
+          class="px-4 py-2 bg-pink-500 text-black font-bold rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="mb-4 text-sm text-gray-600">
+      Showing <span id="visibleCount">0</span> of <span id="totalCount">0</span> courts
+    </div>
+    
+    <!-- No Results Message -->
+    <div id="noResults" class="hidden text-center py-8 text-white">
+      No courts found matching your search criteria.
+    </div>
+    
+    <div id="courtsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {pickleballCourts.map((court) => (
+        <div 
+          class="court-card bg-pink-300 text-black rounded-lg shadow-lg overflow-hidden" 
+          data-state={court.state}
+          data-name={court.name.toLowerCase()}
+        >
+          <!-- Court card content remains the same -->
+          <img 
+            src={court.imageUrl} 
+            alt={`${court.name} Courts`}
+            class="w-full h-48 object-cover"
+          />
+          
+          <div class="p-4">
+            <h2 class="text-xl font-bold mb-2">{court.name}</h2>
+            <p class="text-gray-600 text-sm mb-3">{court.state}</p>
+            
+            <!-- Rest of the card content... -->
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                </svg>
+                <span>{court.distance} km Away</span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM8 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H9a1 1 0 01-1-1V4z" />
+                </svg>
+                <span>{court.courts} Courts</span>
+              </div>
+              
+              {court.permanentLines && (
+                <div class="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                  </svg>
+                  <span>Perm. Lines</span>
+                </div>
+              )}
+              
+              {court.portableNets && (
+                <div class="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                  </svg>
+                  <span>Portable Nets</span>
+                </div>
+              )}
+            </div>
+            
+            <a
+              href={court.googleMapsLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mt-4 inline-block w-full text-center bg-pink-600 text-white py-2 px-4 rounded hover:bg-pink-700 transition-colors"
             >
-              Start Learning
+              Get Directions
             </a>
           </div>
         </div>
       ))}
     </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="mt-8 flex justify-center items-center gap-2">
+      <button id="prevPage" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        Previous
+      </button>
+      <div id="pageNumbers" class="flex gap-2">
+        <!-- Page numbers will be inserted here -->
+      </div>
+      <button id="nextPage" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        Next
+      </button>
+    </div>
   </div>
 </Layout>
+
+<script>
+  // Type declarations
+  interface HTMLElementWithData extends HTMLElement {
+    dataset: {
+      state: string;
+      name: string;
+    };
+  }
+
+  // Constants
+  const ITEMS_PER_PAGE = 9;
+
+  // Get DOM elements
+  const stateFilter = document.getElementById('stateFilter') as HTMLSelectElement;
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const resetButton = document.getElementById('resetFilters') as HTMLButtonElement;
+  const courtCards = document.querySelectorAll('.court-card');
+  const noResults = document.getElementById('noResults') as HTMLElement;
+  const visibleCount = document.getElementById('visibleCount') as HTMLElement;
+  const totalCount = document.getElementById('totalCount') as HTMLElement;
+  const prevPageBtn = document.getElementById('prevPage') as HTMLButtonElement;
+  const nextPageBtn = document.getElementById('nextPage') as HTMLButtonElement;
+  const pageNumbers = document.getElementById('pageNumbers') as HTMLElement;
+
+  let currentPage = 1;
+  let filteredCards: HTMLElementWithData[] = [];
+
+  // Filter function
+  function filterCourts() {
+    const selectedState = stateFilter.value;
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    
+    // Reset pagination to first page
+    currentPage = 1;
+    
+    // Filter cards
+    filteredCards = Array.from(courtCards).filter(card => {
+      const typedCard = card as HTMLElementWithData;
+      const matchesState = selectedState === 'all' || typedCard.dataset.state === selectedState;
+      const matchesSearch = typedCard.dataset.name.includes(searchTerm);
+      return matchesState && matchesSearch;
+    }) as HTMLElementWithData[];
+
+    // Update counts
+    visibleCount.textContent = filteredCards.length.toString();
+    totalCount.textContent = courtCards.length.toString();
+
+    // Show/hide no results message
+    noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
+
+    updatePagination();
+    displayCurrentPage();
+  }
+
+  // Pagination functions
+  function updatePagination() {
+    const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE);
+    
+    // Update pagination buttons state
+    prevPageBtn.disabled = currentPage === 1;
+    nextPageBtn.disabled = currentPage === totalPages;
+
+    // Generate page numbers
+    pageNumbers.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const pageButton = document.createElement('button');
+      pageButton.className = `px-3 py-1 rounded-lg ${
+        i === currentPage 
+          ? 'bg-blue-600 text-white' 
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      }`;
+      pageButton.textContent = i.toString();
+      pageButton.addEventListener('click', () => {
+        currentPage = i;
+        displayCurrentPage();
+        updatePagination();
+      });
+      pageNumbers.appendChild(pageButton);
+    }
+  }
+
+  function displayCurrentPage() {
+    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIdx = startIdx + ITEMS_PER_PAGE;
+
+    // Hide all cards first
+    courtCards.forEach(card => {
+      (card as HTMLElement).style.display = 'none';
+    });
+
+    // Show only cards for current page
+    filteredCards.slice(startIdx, endIdx).forEach(card => {
+      card.style.display = 'block';
+    });
+  }
+
+  // Event listeners
+  stateFilter.addEventListener('change', filterCourts);
+  searchInput.addEventListener('input', filterCourts);
+  
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      displayCurrentPage();
+      updatePagination();
+    }
+  });
+
+  nextPageBtn.addEventListener('click', () => {
+    const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE);
+    if (currentPage < totalPages) {
+      currentPage++;
+      displayCurrentPage();
+      updatePagination();
+    }
+  });
+
+  // Reset filters
+  resetButton.addEventListener('click', () => {
+    stateFilter.value = 'all';
+    searchInput.value = '';
+    currentPage = 1;
+    filterCourts();
+  });
+
+  // Initial setup
+  filterCourts();
+</script>
