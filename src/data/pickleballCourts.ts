@@ -9,61 +9,72 @@ export const pickleballCourts = [
     courts: 6,
     permanentLines: true,
     portableNets: false,
-    googleMapsLink: "https://www.google.com/maps/search/Dugout+Sports+Roop+Nagar+pickleball+court",
+    googleMapsLink:
+      "https://www.google.com/maps/search/Dugout+Sports+Roop+Nagar+pickleball+court",
   },
   {
     id: 2,
     name: "PickleJoy | Opposite Defence Colony|  New Delhi",
-    imageUrl: "https://media.hudle.in/venues/83574028-aa7f-40cf-a657-7c5d27af8a0c/photo/460162fe38fd3c06e6cc2dd3e323ec1dde2020dd",
+    imageUrl:
+      "https://media.hudle.in/venues/83574028-aa7f-40cf-a657-7c5d27af8a0c/photo/460162fe38fd3c06e6cc2dd3e323ec1dde2020dd",
     state: "New Delhi",
     distance: "1.2",
     courts: 6,
     permanentLines: true,
     portableNets: false,
-    googleMapsLink: "https://maps.google.com/?q=PickleJoy+Rooftop+74+Link+Road+Opposite+Defence+Colony+New+Delhi",
+    googleMapsLink:
+      "https://maps.google.com/?q=PickleJoy+Rooftop+74+Link+Road+Opposite+Defence+Colony+New+Delhi",
   },
   {
     id: 3,
     name: "Bharat Pickleball Academy | Palam Vihar",
-    imageUrl: "https://media.hudle.in/venues/f975d37a-f05e-4352-a203-32a1c3c968e3/photo/413e6516a12bc22ded0aa95c6b3b545344fc6ddc",
+    imageUrl:
+      "https://media.hudle.in/venues/f975d37a-f05e-4352-a203-32a1c3c968e3/photo/413e6516a12bc22ded0aa95c6b3b545344fc6ddc",
     state: "New Delhi",
     distance: "6.6",
     courts: 4,
     permanentLines: false,
     portableNets: true,
-    googleMapsLink: "https://maps.google.com/?q=Bharat+Pickleball+Academy+Palam+Vihar+Bijwasan-Palam+Vihar+Road,+Bijwasan",
+    googleMapsLink:
+      "https://maps.google.com/?q=Bharat+Pickleball+Academy+Palam+Vihar+Bijwasan-Palam+Vihar+Road,+Bijwasan",
   },
   {
     id: 4,
     name: "PlayAll Sports Complex | Noida Sector 73",
-    imageUrl: "https://media.hudle.in/venues/f3dc0bec-a890-47c7-b4d3-2f7798acfb32/photo/29b1657fc6c0057f3e1f99b9c3fb93ce2217bc9d",
+    imageUrl:
+      "https://media.hudle.in/venues/f3dc0bec-a890-47c7-b4d3-2f7798acfb32/photo/29b1657fc6c0057f3e1f99b9c3fb93ce2217bc9d",
     state: "Noida",
     distance: "2.5",
     courts: 2,
     permanentLines: true,
     portableNets: false,
-    googleMapsLink: "https://maps.google.com/?q=PlayAll+Sports+Complex+Noida+Sector+73",
+    googleMapsLink:
+      "https://maps.google.com/?q=PlayAll+Sports+Complex+Noida+Sector+73",
   },
   {
     id: 5,
     name: "Indrayu Jeta Sports | Noida Sector 50",
-    imageUrl: "https://media.hudle.in/venues/89e1231d-9ce8-414b-a2a8-e7cd553524f7/photo/2aba6e316ac6cc0efa7092cd5e5deb9e241f480d",
+    imageUrl:
+      "https://media.hudle.in/venues/89e1231d-9ce8-414b-a2a8-e7cd553524f7/photo/2aba6e316ac6cc0efa7092cd5e5deb9e241f480d",
     state: "Noida",
     distance: "2.5",
     courts: 8,
     permanentLines: true,
     portableNets: false,
-    googleMapsLink: "https://maps.google.com/?q=Indrayu+Jeta+Sports+Noida+Sector+50",
+    googleMapsLink:
+      "https://maps.google.com/?q=Indrayu+Jeta+Sports+Noida+Sector+50",
   },
   {
     id: 6,
     name: "Conscient Pickleball Sports Arena",
-    imageUrl: "https://media.hudle.in/venues/f45879f2-03df-4e46-90fa-bae58ff94742/photo/44c091abb4a2285fcff286caeed6d47f0efee114",
+    imageUrl:
+      "https://media.hudle.in/venues/f45879f2-03df-4e46-90fa-bae58ff94742/photo/44c091abb4a2285fcff286caeed6d47f0efee114",
     state: "Gurugram",
     distance: "2.5",
     courts: 8,
     permanentLines: true,
     portableNets: false,
-    googleMapsLink: "https://maps.google.com/?q=Conscient+Pickleball+Sports+Arena+Conscient+Sports+Gate"
+    googleMapsLink:
+      "https://maps.google.com/?q=Conscient+Pickleball+Sports+Arena+Conscient+Sports+Gate",
   },
 ];
