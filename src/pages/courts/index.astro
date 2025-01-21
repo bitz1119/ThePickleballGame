@@ -4,6 +4,21 @@ import { pickleballCourts } from '../../data/pickleballCourts';
 
 // Get unique states for filter
 const uniqueStates = [...new Set(pickleballCourts.map(court => court.state))];
+const uniqueCountries = [...new Set(
+  pickleballCourts
+    .map(court => {
+      if (court.countryCode === 'IN') {
+        return 'India';
+      }
+      if (court.countryCode === 'US') {
+        return 'United States';
+      }
+      // Handle other country codes or skip invalid ones
+      return null; // Return null for unhandled cases
+    })
+    .filter(country => country) // Remove null or undefined values
+)];
+
 const ITEMS_PER_PAGE = 9;  // 3x3 grid
 ---
 
@@ -42,6 +57,15 @@ const ITEMS_PER_PAGE = 9;  // 3x3 grid
             <option value={state}>{state}</option>
           ))}
         </select>
+        <select 
+          id="countryFilter" 
+          class="w-full md:w-48 p-2 border border-pink-600 text-pink-600 font-bold bg-slate-50 rounded-lg shadow-sm focus:border-pink-400 focus:ring-1 focus:ring-pink-400"
+        >
+          <option value="all">All Countries</option>
+          {uniqueCountries.map(country => (
+            <option value={country}>{country}</option>
+          ))}
+        </select>
         
         <button 
           id="resetFilters"
@@ -67,6 +91,7 @@ const ITEMS_PER_PAGE = 9;  // 3x3 grid
         <div 
           class="court-card bg-white text-black rounded-lg shadow-lg overflow-hidden" 
           data-state={court.state}
+          data-country={court.countryCode}
           data-name={court.title.toLowerCase()}
         >
           <!-- Court card content remains the same -->
@@ -118,6 +143,7 @@ const ITEMS_PER_PAGE = 9;  // 3x3 grid
   // Type declarations
   interface HTMLElementWithData extends HTMLElement {
     dataset: {
+      country: string;
       state: string;
       name: string;
     };
@@ -128,6 +154,7 @@ const ITEMS_PER_PAGE = 9;  // 3x3 grid
 
   // Get DOM elements
   const stateFilter = document.getElementById('stateFilter') as HTMLSelectElement;
+  const countryFilter = document.getElementById('countryFilter') as HTMLSelectElement;
   const searchInput = document.getElementById('searchInput') as HTMLInputElement;
   const resetButton = document.getElementById('resetFilters') as HTMLButtonElement;
   const courtCards = document.querySelectorAll('.court-card');
@@ -143,30 +170,43 @@ const ITEMS_PER_PAGE = 9;  // 3x3 grid
 
   // Filter function
   function filterCourts() {
-    const selectedState = stateFilter.value;
-    const searchTerm = searchInput.value.toLowerCase().trim();
-    
-    // Reset pagination to first page
-    currentPage = 1;
-    
-    // Filter cards
-    filteredCards = Array.from(courtCards).filter(card => {
-      const typedCard = card as HTMLElementWithData;
-      const matchesState = selectedState === 'all' || typedCard.dataset.state === selectedState;
-      const matchesSearch = typedCard.dataset.name.includes(searchTerm);
-      return matchesState && matchesSearch;
-    }) as HTMLElementWithData[];
+  const selectedState = stateFilter.value;
+  const selectedCountry = countryFilter.value;
+  const searchTerm = searchInput.value.toLowerCase().trim();
 
-    // Update counts
-    visibleCount.textContent = filteredCards.length.toString();
-    totalCount.textContent = courtCards.length.toString();
+  // Map human-readable country names to country codes
+  const countryNameToCode = {
+    India: 'IN',
+    'United States': 'US',
+    // Add more countries as needed
+  };
 
-    // Show/hide no results message
-    noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
+  const selectedCountryCode = 
+    selectedCountry === 'all' ? 'all' : countryNameToCode[selectedCountry];
 
-    updatePagination();
-    displayCurrentPage();
-  }
+  // Reset pagination to first page
+  currentPage = 1;
+
+  // Filter cards
+  filteredCards = Array.from(courtCards).filter(card => {
+    const typedCard = card as HTMLElementWithData;
+    const matchesState = selectedState === 'all' || typedCard.dataset.state === selectedState;
+    const matchesCountry = selectedCountryCode === 'all' || typedCard.dataset.country === selectedCountryCode;
+    const matchesSearch = typedCard.dataset.name.includes(searchTerm);
+    return matchesState && matchesCountry && matchesSearch;
+  }) as HTMLElementWithData[];
+
+  // Update counts
+  visibleCount.textContent = filteredCards.length.toString();
+  totalCount.textContent = courtCards.length.toString();
+
+  // Show/hide no results message
+  noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
+
+  updatePagination();
+  displayCurrentPage();
+}
+
 
   // Pagination functions
   function updatePagination() {
@@ -212,6 +252,7 @@ const ITEMS_PER_PAGE = 9;  // 3x3 grid
 
   // Event listeners
   stateFilter.addEventListener('change', filterCourts);
+  countryFilter.addEventListener('change', filterCourts);
   searchInput.addEventListener('input', filterCourts);
   
   prevPageBtn.addEventListener('click', () => {
