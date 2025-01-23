@@ -1,11 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { pickleballCourts } from '../../data/pickleballCourts';
+import { pickleballCourts as courtsData } from '../../data/pickleballCourts';
+
+// Filter unique pickleball courts based on their ID
+const uniquePickleballCourts = [...new Map(courtsData.map(court => [court.cid, court])).values()];
 
 // Get unique states for filter
-const uniqueStates = [...new Set(pickleballCourts.map(court => court.state))];
+const uniqueStates = [...new Set(uniquePickleballCourts.map(court => court.state))];
+
 const uniqueCountries = [...new Set(
-  pickleballCourts
+  uniquePickleballCourts
     .map(court => {
       if (court.countryCode === 'IN') {
         return 'India';
@@ -20,7 +24,11 @@ const uniqueCountries = [...new Set(
 )];
 
 const ITEMS_PER_PAGE = 9;  // 3x3 grid
+
+// You can now use uniquePickleballCourts, uniqueStates, and uniqueCountries in your component
+
 ---
+
 
 <Layout title="Pickleball Courts">
   <div class="max-w-6xl mx-auto px-4 py-8">
@@ -87,7 +95,7 @@ const ITEMS_PER_PAGE = 9;  // 3x3 grid
     </div>
     
     <div id="courtsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {pickleballCourts.map((court) => (
+      {uniquePickleballCourts.map((court) => (
         <div 
           class="court-card bg-white text-black rounded-lg shadow-lg overflow-hidden" 
           data-state={court.state}
