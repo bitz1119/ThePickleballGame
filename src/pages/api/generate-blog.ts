@@ -1,110 +1,127 @@
-import OpenAI from 'openai';
+import { OpenAI } from 'openai';
 import fs from 'fs';
 import path from 'path';
+import type { APIRoute } from 'astro';
 
-const OPENAI_API_KEY = 'sk_openai_api_key';
-
-
-console.log("🚀 Mistral AI: " , OPENAI_API_KEY);
-
-const openai = new OpenAI({
-  baseURL: "https://api-inference.huggingface.co/v1/",
-  apiKey: OPENAI_API_KEY
-});
+console.log("process.cwd() : " , process.cwd());
+console.log('OPENAI_API_KEY:', import.meta.env.OPENAI_API_KEY);
 
 
+export const  POST : APIRoute= async ({ request }) => {
+  const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY;
+  const BLOG_DIR = path.join(process.cwd(), 'src', 'pages', 'generated-blog');
 
-const userInput = "Generate a blog about pickle ball in India";
-const SYSTEM_PROMPT = `
-You are the AI assistant expert in creating the websites in astro you need to work upon the thing that is
-you have to consider you justaddthe imagesand MD format properly so thatgenerated blog the super efficient and highly readable
-You are a professional blog architect.
+  
+  try {
+    const { userInput } = await request.json();
+	console.log("userInput : " , userInput);
+    
+    const openai = new OpenAI({
+      baseURL: "https://api-inference.huggingface.co/v1/",
+      apiKey: OPENAI_API_KEY
+    });
 
-Generate comprehensive blog posts with these elements:
+    const SYSTEM_PROMPT = `
+You are an expert AI assistant for creating blog posts in Astro framework format. Follow these strict rules:
 
-user Came and Enter the Prompt : userInput
-your Task is To create the Blog 
-
-1. **Blog Content**:
-- Catchy SEO-optimized title
-- Introduction with hook (<100 words)
-- 3-5 sections with H2/H3 headers
-- Data-supported arguments
-- Conclusion with actionable takeaways
-
-2. **Image Proposals**:
-[Propose 3-5 images with:
-• Visual description
-• Placement context
-• Alt-text draft
-• Source type (CC0/Commercial)]
-
-
-3. **Analytical Thoughts**:
-- Cultural implications
-- Industry impact analysis
-- Future trend predictions
-
-Format output in Markdown with clear section dividers. Prioritize India-specific context.
-
-
-Example: 
+1. Front Matter Formatting:
 ---
-title   : "The Essential Rules of Pickleball Every Beginner Should Know"
-date : '2023-08-01'
-description : 'Pickleball Guide'
+title: "Your Title Text Without Any Formatting"
+date: 'YYYY-MM-DD'
+description: "Plain text description"
+---
+• No ** or any markdown in title/date/description
+• Space after colon in front matter
+• Date in ISO format
+
+2. Content Requirements:
+- Use ## for H2 and ### for H3 headers
+- Maintain 75-100 word paragraph breaks
+- India-specific examples where applicable
+- CC0 image sources preferred
+
+3. Prohibited Formatting:
+❌ **Bold** in title/date/description
+❌ Markdown in front matter
+❌ Unsourced images
+
+Example of Correct Format:
 
 ---
-## The Basics of Pickleball
+title: "Sustainable Farming Techniques for Indian Agriculture"
+date: '2024-03-15'
+description: "Modern eco-friendly farming practices"
+---
 
-Pickleball combines elements of tennis, badminton, and ping-pong. Here are the key rules:
+## Water Conservation Methods
 
-### The Serve:
-- Must be underhand
-- Paddle contact below waist level
-- Serve diagonally to opponent's service court
+### Micro-Irrigation Systems
+Drip irrigation adoption in Punjab increased yields by 40% while reducing water usage...
 
-### The Kitchen (Non-Volley Zone):
-- 7-foot area on both sides of the net
-- Players cannot volley while standing in this zone
-- You can enter to play a bounced ball
+[Image Proposal 1]
+• Visual: Farmer inspecting drip irrigation lines
+• Placement: After first paragraph
+• Alt-text: "Farm worker checking drip irrigation system in Punjab field"
+• Source: CC0 agricultural photo database
 
-### Scoring:
-- Only serving team can score points
-- Games typically played to 11 points (win by 2)
-'
+Analytical Insight: The National Water Mission estimates...
+
+// Key Requirements Reminder
+- Triple-check front matter formatting
+- Verify image licensing information
+- Include India-specific data points
+- Prevent markdown usage in title/date/description
 `;
 
-const chatCompletion = await openai.chat.completions.create({
-	model: "mistralai/Mistral-Nemo-Instruct-2407",
-	messages: [
-        {
-			role: "system",
-			content: SYSTEM_PROMPT
-		},
-		{
-			role: "user",
-			content: userInput
-		}
-	],
-	max_tokens: 500
-});
+    const completion = await openai.chat.completions.create({
+      model: "mistralai/Mistral-Nemo-Instruct-2407",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userInput }
+      ],
+      max_tokens: 500
+    });
 
-console.log("✨ Mistral AI: " , chatCompletion.choices[0].message.content);
+    const blogContent = completion.choices[0].message.content;
 
-const blogContent = chatCompletion.choices[0].message.content;
+    console.log("✨ blogContent : " , blogContent);
+    const slug = blogContent.match(/title\s*:\s*"([^"]+)"/i)[1]
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .replace(/\s+/g, '-');
 
-// Create filename (you might want to generate a unique name)
-const fileName = `blog-post-${Date.now()}.md`;
-const blogDirectory = path.join(process.cwd(),'..' , 'generated-blog');
+    const fileName = `${slug}.md`;
+    const filePath = path.join(BLOG_DIR, fileName);
 
-// Create directory if it doesn't exist
-if (!fs.existsSync(blogDirectory)) {
-  fs.mkdirSync(blogDirectory, { recursive: true });
+    if (!fs.existsSync(BLOG_DIR)) {
+      fs.mkdirSync(BLOG_DIR, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, blogContent);
+
+    return new Response(JSON.stringify({
+      success: true,
+      slug,
+      path: filePath
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+
+  } catch (error) {
+  console.error("error : " , error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
 }
-
-// Write file to blog directory
-const filePath = path.join(blogDirectory, fileName);
-fs.writeFileSync(filePath, blogContent);
-
-console.log(`✅ Blog post saved to: ${filePath}`);

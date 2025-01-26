@@ -2,16 +2,18 @@ import { defineConfig, envField } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
+  output: 'server',
   integrations: [tailwind()],
   experimental: {
     env: {
-      schema: {
-        OPEN_AI_API_KEY: envField.string({ 
-          required: true,
-          context: 'client',
-          access: 'public',
-        }),
+      schema : {
+        OPENAI_API_KEY: envField.string({
+           type: 'string',
+           context: 'server',
+           required: true,
+           access: 'secret',
+          }),
       }
-    }
-  }
+    },
+  },
 });
