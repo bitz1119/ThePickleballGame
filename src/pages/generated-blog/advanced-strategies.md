@@ -21,3 +21,4 @@ description : "Master the fundamental rules of pickleball with our comprehensive
     ### Scoring:
     - Only serving team can score points
     - Games typically played to 11 points (win by 2)
+    </article>
