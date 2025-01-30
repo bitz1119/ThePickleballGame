@@ -1,11 +1,11 @@
 ---
-layout: '../layouts/BlogLayout.astro'
+Layout: '../layouts/Layout.astro'
 title: "Pickleball in India: A Growing Trend in Bombay"
 date: '2024-07-20'
 description: "Exploring the rising popularity of pickleball in India, with a focus on Bombay"
 ---
 
-<layout title="Pickleball in India: A Growing Trend in Bombay">
+<Layout title="Pickleball in India: A Growing Trend in Bombay">
 
 ## The Rise of Pickleball in India
 
@@ -28,8 +28,10 @@ The Bombay pickleball community is vibrant and welcoming, with players ranging f
 Analytical Insight: According to the Pickleball Federation of India, the number of registered players in Bombay has grown by 400% in the last three years. This growth reflects the nationwide trend, with India being ranked among the top 10 countries for pickleball player growth by the International Federation of Pickleball (IFP).
 
 // Key Requirements Reminder
+
 - Verify front matter formatting
 - Confirm image licensing information
 - Include relevant India-specific data
 - Maintain paragraph length and structure
-</layout>
+
+</Layout>
