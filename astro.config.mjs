@@ -4,6 +4,11 @@ import vercel from "@astrojs/vercel";
 
 export default defineConfig({
   output: 'server',
+  adapter: vercel({
+    webAnalytics: {
+      enabled: true
+    }
+  }),
   integrations: [tailwind()],
   experimental: {
     env: {
@@ -17,5 +22,4 @@ export default defineConfig({
       }
     },
   },
-  adapter: vercel(),
 });
