@@ -6,6 +6,7 @@ description: "Exploring the rising popularity of pickleball in India, with a foc
 ---
 
 <layout title="Pickleball in India: A Growing Trend in Bombay">
+
 ## The Rise of Pickleball in India
 
 Pickleball, a paddle sport combining elements of tennis, badminton, and ping-pong, is gaining traction in India, with Bombay leading the urban trend. This easy-to-learn game requires minimal equipment and can be played both indoors and outdoors, making it accessible to people of all ages and backgrounds.
