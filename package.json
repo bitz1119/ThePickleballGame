@@ -14,7 +14,7 @@
     "@astrojs/tailwind": "^5.1.0",
     "@astrojs/vercel": "^8.0.5",
     "@tailwindcss/typography": "^0.5.10",
-    "astro": "^4.15.3",
+    "astro": "^5.2.1",
     "axios": "^1.6.7",
     "dotenv": "^16.4.7",
     "openai": "^4.78.1",

@@ -5,17 +5,19 @@ import vercel from "@astrojs/vercel";
 export default defineConfig({
   output: 'server',
   integrations: [tailwind()],
-  experimental: {
-    env: {
-      schema : {
-        OPENAI_API_KEY: envField.string({
-           type: 'string',
-           context: 'server',
-           required: true,
-           access: 'secret',
-          }),
+  env: {
+    schema : {
+      OPENAI_API_KEY: envField.string({
+        type: 'string',
+        context: 'server',
+        required: true,
+        access: 'secret',
+      }),
       }
-    },
   },
-  adapter: vercel(),
+  adapter: vercel({
+    webAnalytics: {
+      enabled: true
+    }
+  }),
 });
