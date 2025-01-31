@@ -2,7 +2,7 @@
 title   : "The Essential Rules of Pickleball Every Beginner Should Know"
 date : '2023-08-01'
 description : 'Pickleball Guide'
-
+layout: ../../layouts/Layout.astro
 ---
 ## The Basics of Pickleball
 

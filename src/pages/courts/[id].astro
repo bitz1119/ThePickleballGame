@@ -2,15 +2,18 @@
 import Layout from "../../layouts/Layout.astro";
 import { pickleballCourts } from "../../data/pickleballCourts";
 
-export function getStaticPaths() {
-  return pickleballCourts.map((court) => ({
-    params: { id: court.cid.toString() },
-    props: { court },
-  }));
+// Get the id parameter from the URL
+const { id } = Astro.params;
+
+// Find the court with matching cid
+const court = pickleballCourts.find(c => c.cid.toString() === id);
+
+// Handle case where court is not found
+if (!court) {
+  return Astro.redirect('/404'); // Redirect to 404 page if court not found
 }
 
-const { court } = Astro.props;
-
+// Format address components, filtering out any null/undefined values
 const formattedAddress = [
   court.street,
   court.neighborhood,
@@ -19,10 +22,19 @@ const formattedAddress = [
   court.postalCode,
 ].filter(Boolean).join(", ");
 
+// Extract and format amenities
 const amenities = court.additionalInfo?.Amenities?.[0] || {};
 const amenitiesList = Object.entries(amenities)
   .filter(([_, value]) => value === true)
   .map(([key]) => key);
+
+// Generate static paths for all courts
+export function getStaticPaths() {
+  return pickleballCourts.map((court) => ({
+    params: { id: court.cid.toString() },
+    props: { court },
+  }));
+}
 ---
 
 <Layout title={court.title}>
@@ -97,22 +109,24 @@ const amenitiesList = Object.entries(amenities)
         </div>
 
         <!-- Opening Hours Card -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <h2 class="text-xl text-black font-semibold mb-4 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-            </svg>
-            Opening Hours
-          </h2>
-          <div class="space-y-2">
-            {court.openingHours?.map((schedule) => (
-              <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                <span class="font-medium text-gray-900">{schedule.day}</span>
-                <span class="text-gray-600">{schedule.hours}</span>
-              </div>
-            ))}
+        {court.openingHours && (
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl text-black font-semibold mb-4 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+              </svg>
+              Opening Hours
+            </h2>
+            <div class="space-y-2">
+              {court.openingHours.map((schedule) => (
+                <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                  <span class="font-medium text-gray-900">{schedule.day}</span>
+                  <span class="text-gray-600">{schedule.hours}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <!-- Right Column -->
@@ -143,10 +157,10 @@ const amenitiesList = Object.entries(amenities)
                 class="flex items-center justify-center gap-2 w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                  <path fill-rule="evenodd" d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                   <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                 </svg>
-                View on Google Maps
+                Get Directions
               </a>
             )}
           </div>
