@@ -1,8 +1,10 @@
 ---
+layout: ../../layouts/Layout.astro
 title : "The Essential Rules of Pickleball Every Beginner Should Know"
 date :  '2023-08-01'
 description : "Master the fundamental rules of pickleball with our comprehensive guide for new players. Learn about scoring, serving, and the kitchen zone."
 ---
+<layout title="Every" >
   <article class="prose max-w-2xl mx-auto">
     ## The Basics of Pickleball
 
@@ -22,3 +24,4 @@ description : "Master the fundamental rules of pickleball with our comprehensive
     - Only serving team can score points
     - Games typically played to 11 points (win by 2)
     </article>
+  <layout>

@@ -2,6 +2,7 @@
 title: "Pickleball in India: A Growing Trend in Bombay"
 date: '2024-07-20'
 description: "Exploring the rising popularity of pickleball in India, with a focus on Bombay"
+layout: ../../layouts/Layout.astro
 ---
 
 ## The Rise of Pickleball in India

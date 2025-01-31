@@ -2,6 +2,7 @@
 title: "Pickleball: The Rapidly Growing Sport in Delhi"
 date: '2024-04-10'
 description: "Exploring the rise and benefits of pickleball in India's capital"
+layout: ../../layouts/Layout.astro
 ---
 
 ## Introduction to Pickleball
