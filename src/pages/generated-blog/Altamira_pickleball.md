@@ -42,7 +42,7 @@ For those who enjoy competition, Altamira 4 Tennis Club hosts regular **local an
 
 Pickleball is rapidly gaining popularity worldwide, and Altamira 4 Tennis Club and Pickleball Club has been at the forefront of this movement. With dedicated courts and a strong focus on pickleball development, Altamira 4 offers everything needed for a fulfilling experience.
 
-<img src="/images/professional_pickleball_courts_designed_for_optimal_play.webp" class="hero-image" alt="professional_pickleball_courts_designed_for_optimal_play">
+<img src="/images/pickleball_fastest_growing_sports.jpeg" class="hero-image" alt="professional_pickleball_courts_designed_for_optimal_play">
 
 ### Specialized Pickleball Courts
 
