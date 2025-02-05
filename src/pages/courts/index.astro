@@ -14,6 +14,13 @@ const stateFrequency = uniquePickleballCourts.reduce((acc, court) => {
 // Get unique states for filter
 const uniqueStates = [...new Set(uniquePickleballCourts.map(court => court.state))].sort((a, b) => stateFrequency[b] - stateFrequency[a]);
 
+// Log the frequency of each state
+// console.table(
+//   uniqueStates.map(state => ({
+//     State: state,
+//     Courts: stateFrequency[state]
+//   }))
+// );
 
 const uniqueCountries = [...new Set(
   uniquePickleballCourts
