@@ -6,15 +6,7 @@ import sitemap from "@astrojs/sitemap";
 export default defineConfig({
   site: "https://the-pickleball-game.vercel.app/",
   output: "server",
-  integrations: [
-    tailwind(),
-    sitemap({
-      customPages: [
-        "https://the-pickleball-game.vercel.app/generated-blog",
-        "https://the-pickleball-game.vercel.app/courts",
-      ],
-    }),
-  ],
+  integrations: [tailwind(), sitemap()],
   env: {
     schema: {
       OPENAI_API_KEY: envField.string({
