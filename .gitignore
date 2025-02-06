@@ -133,3 +133,4 @@ dist
 # google map sdk
 google-maps-scraper/
 scrapper/
+.vercel/
