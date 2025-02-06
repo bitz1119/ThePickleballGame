@@ -17,6 +17,8 @@ Bombay, with its growing urban infrastructure, has seen a surge in pickleball co
 [Image Proposal 1]
 • Visual: Group of young adults playing pickleball on a rooftop court in Bombay
 • Placement: Center of article
+• Alt-text: "A group of young adults playing pickleball on a rooftop court in Bombay"
+• Source: CC0 photographer capturing urban sports in India
 • Alt-text: "Pickleball players enjoying a game in Bombay"
 • Source: CC0 photographer capturing urban sports in India
 
