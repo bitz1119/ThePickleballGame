@@ -28,6 +28,14 @@ Pickleball combines elements of tennis, badminton, and ping-pong. Here are the k
 - Paddle must be used to hit the ball
 - Paddle must be used for both serving and volleying
 
+### The Net:
+- Net must be used to hit the ball
+- Net must be used for both serving and volleying
+
+### The Racket:
+- Racket must be used to hit the ball
+- Racket must be used for both serving and volleying
+
 ### The Ball:
 - Ball must be used to hit the paddle
 - Ball must be used for both serving and volleying
