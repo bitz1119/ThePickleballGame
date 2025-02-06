@@ -1,23 +1,33 @@
-import { defineConfig, envField } from 'astro/config';
-import tailwind from '@astrojs/tailwind';
+import { defineConfig, envField } from "astro/config";
+import tailwind from "@astrojs/tailwind";
 import vercel from "@astrojs/vercel";
+import sitemap from "@astrojs/sitemap";
 
 export default defineConfig({
-  output: 'server',
-  integrations: [tailwind()],
+  site: "https://the-pickleball-game.vercel.app/",
+  output: "server",
+  integrations: [
+    tailwind(),
+    sitemap({
+      customPages: [
+        "https://the-pickleball-game.vercel.app/generated-blog",
+        "https://the-pickleball-game.vercel.app/courts",
+      ],
+    }),
+  ],
   env: {
-    schema : {
+    schema: {
       OPENAI_API_KEY: envField.string({
-        type: 'string',
-        context: 'server',
+        type: "string",
+        context: "server",
         required: true,
-        access: 'secret',
+        access: "secret",
       }),
-      }
+    },
   },
   adapter: vercel({
     webAnalytics: {
-      enabled: true
-    }
+      enabled: true,
+    },
   }),
 });
