@@ -11,10 +11,9 @@ export const  POST : APIRoute= async ({ request }) => {
   const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY;
   const BLOG_DIR = path.join(process.cwd(), 'src', 'pages', 'generated-blog');
 
-  
   try {
-    const { userInput } = await request.json();
-	console.log("userInput : " , userInput);
+  const { userInput } = await request.json();
+	console.log("userInput : " , request.json());
     
     const openai = new OpenAI({
       baseURL: "https://api-inference.huggingface.co/v1/",
