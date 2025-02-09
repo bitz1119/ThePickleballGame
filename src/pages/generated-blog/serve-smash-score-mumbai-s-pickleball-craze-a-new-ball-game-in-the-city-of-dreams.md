@@ -1,5 +1,8 @@
 ---
 layout : ../../layouts/Layout.astro
+title: "Serve, Smash, Score! Mumbai's Pickleball Craze: A New Ball Game in the City of Dreams"
+description: "A blog post about Serve, Smash, Score! Mumbai's Pickleball Craze: A New Ball Game in the City of Dreams."
+date: "2023-08-01"
 ---
 
 # "Serve, Smash, Score! Mumbai's Pickleball Craze: A New Ball Game in the City of Dreams"

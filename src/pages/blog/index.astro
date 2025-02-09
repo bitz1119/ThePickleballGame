@@ -10,7 +10,7 @@ const sortedPosts = allPosts.sort((a, b) => {
   return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
 });
 
-console.log("sortedPosts : " , sortedPosts[0].frontmatter);
+console.log("sortedPosts : " , sortedPosts[0].frontmatter );
 ---
 
 <Layout title="Blog Posts">
@@ -25,9 +25,11 @@ console.log("sortedPosts : " , sortedPosts[0].frontmatter);
     </header>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      
       {sortedPosts.map((post) => (
+        
         <div class="group relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.16)] border border-gray-200/50 dark:border-gray-700/50 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-          <a href={post.url} class="block h-full">
+          <a href={`${post.url}`} class="block h-full">
             <div class="relative aspect-[16/9] overflow-hidden">
               {post.frontmatter.image ? (
                 <img

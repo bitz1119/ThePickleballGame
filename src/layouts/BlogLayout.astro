@@ -1,11 +1,21 @@
 ---
+// BlogPost.astro
 import Layout from './Layout.astro';
+import '../styles/markdown.css';
 
+// You can define props that your markdown files can pass
 const { frontmatter } = Astro.props;
 ---
 
-<Layout title={frontmatter?.title || "Blog"}>
-  <article class="prose lg:prose-xl mx-auto px-4 prose-invert">
-    <slot />
+<Layout title={frontmatter.title}>
+  <!-- You can add blog-specific elements here -->
+  <article class="blog-post">
+    <h1>{frontmatter.title}</h1>
+    {frontmatter.date && <time>{frontmatter.date}</time>}
+    
+    <!-- This is where your markdown content will be injected -->
+    <div class="content">
+      <slot />
+    </div>
   </article>
 </Layout>
