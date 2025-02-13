@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://the-pickleball-game.vercel.app/sitemap-index.xml
+Sitemap: https://the-pickleball-game.vercel.app/sitemap.xml

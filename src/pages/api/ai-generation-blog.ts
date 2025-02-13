@@ -43,6 +43,7 @@ Generate a structured blog outline in **JSON format** about Pickleball. The blog
 - **Chapters**: A list of chapters, each with a unique **number** and **title**.  
  - **Topics**: A list of topics under each chapter, each with a **title**.  
 
+
 ---
 
 Example input: Provide ONLY a valid JSON object with chapters and topics. Ensure proper JSON formatting. Title :  Pickleball in Arunachal Pradesh: A Journey to the Top Courts & Tournaments
@@ -219,66 +220,6 @@ async function generateBlogDescription(title: string): Promise<string> {
   }
 }
 
-// async function createBlogStructure(title: string) {
-//   try {
-//     const response = await openai.chat.completions.create({
-//       model: "mistralai/Mistral-Nemo-Instruct-2407",
-//       messages: [
-//         {
-//           role: "system",
-//           content: SYSTEM_PROMPT_BLOG_STRUCTURE,
-//         },
-//         {
-//           role: "user",
-//           content: `Generate a strict JSON structure for a blog about '${title}':`,
-//         },
-//       ],
-//       temperature: 0.7,
-//       max_tokens: 500,
-//       response_format: { type: "json_object" },
-//     });
-
-//     const rawContent = response.choices[0].message.content || "{}";
-//     console.log("Raw Response Content:", rawContent);
-
-//     const cleanJSON = extractJSON(rawContent);
-//     console.log("Clean JSON:", cleanJSON);
-
-//     const structure = JSON.parse(cleanJSON);
-//     console.log("Parsed Structure:", JSON.stringify(structure, null, 2));
-
-//     return BlogSchema.parse({
-//       title,
-//       outputDir: "./src/pages/generated-blog",
-//       chapters: (structure.chapters || []).map(
-//         (chapter: any, index: number) => ({
-//           number: chapter.number || index + 1,
-//           title: chapter.title || `Chapter ${index + 1}`,
-//           topics: (chapter.topics || []).map((t: any) => ({
-//             title: typeof t === "string" ? t : t.title || `Topic ${index + 1}`,
-//             content: "",
-//           })),
-//         })
-//       ),
-//     });
-//   } catch (error) {
-//     console.error("Blog Structure Generation Full Error:", error);
-
-//     return {
-//       title,
-//       outputDir: "./src/pages/generated-blog",
-//       chapters: Array.from({ length: 6 }, (_, i) => ({
-//         number: i + 1,
-//         title: `Chapter ${i + 1}`,
-//         topics: [
-//           { title: `Topic 1 for Chapter ${i + 1}`, content: "" },
-//           { title: `Topic 2 for Chapter ${i + 1}`, content: "" },
-//         ],
-//       })),
-//     };
-//   }
-// }
-
 
 function getTopicPrefix(index: number): string {
   const prefixes = [
@@ -401,6 +342,13 @@ async function generateTopicContent(
   }
 }
 
+function getRandomDate() {
+  const start = new Date(2024, 0, 1); // January 1, 2024
+  const end = new Date(2025, 11, 31); // December 31, 2025
+  const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+  return randomDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+}
+
 async function writeBlogToMarkdown(blog: any): Promise<string> {
   const outputDir = path.resolve(blog.outputDir);
   await fs.mkdir(outputDir, { recursive: true });
@@ -408,11 +356,9 @@ async function writeBlogToMarkdown(blog: any): Promise<string> {
   const sanitizedTitle = sanitizeFilename(blog.title);
   const filename = `${sanitizedTitle}.md`;
   const filePath = path.join(outputDir, filename);
+  const formattedDate = getRandomDate();
 
-  let markdownContent = `# ${blog.title}\n\n`;
-  if (blog.description) {
-    markdownContent += `## Description\n${blog.description}\n\n`;
-  }
+  let markdownContent = `---\ntitle: "${blog.title}"\ndate: '${formattedDate}'\ndescription: "${blog.description || ''}"\nlayout: ../../layouts/Layout.astro\n---\n\n`;
 
   for (const chapter of blog.chapters) {
     markdownContent += `## ${chapter.title}\n\n`;
@@ -460,6 +406,7 @@ export const POST: APIRoute = async ({ request }) => {
     for (const chapter of blog.chapters) {
       for (const topic of chapter.topics) {
         topic.content = await generateTopicContent(topic, chapter, blogWithDescription);
+        
       }
     }
 
