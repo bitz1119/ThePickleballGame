@@ -15,6 +15,12 @@ export default defineConfig({
         required: true,
         access: "secret",
       }),
+      TAVILY_API_KEY: envField.string({
+        type: "string",
+        context: "server",
+        required: true,
+        access: "secret",
+      })
     },
   },
   adapter: vercel({
