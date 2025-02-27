@@ -3,13 +3,14 @@ layout: ../../../layouts/BlogLayout.astro
 title: "Top 5 Health Benefits of Pickleball"
 date: "June 02, 2023"
 description: "health benefits of pickleball"
-image: "https://www.renown.org/-/media/Project/Renown/RenownHealth/Blogs/Images/Detail-Hero/Blog_BenefitsOfPickleball_880x495.jpg?h=495&iar=0&w=880&rev=ddd19b36591d447989b515080e0a243b&hash=00DF155E463E53AB4E8D896714A3CDF7"
+image: "/images/blog-health-01.avif"
 ---
 **The Rise of Pickleball: A Fun and Healthy Way to Stay Active**
 
-![image](https://www.renown.org/-/media/Project/Renown/RenownHealth/Blogs/Images/Detail-Hero/Blog_BenefitsOfPickleball_880x495.jpg?h=495&iar=0&w=880&rev=ddd19b36591d447989b515080e0a243b&hash=00DF155E463E53AB4E8D896714A3CDF7)
 
 Over the past couple of years, pickleball has rapidly grown in popularity, becoming the fastest-growing sport among people of all ages. This exciting game combines elements of tennis, ping-pong, and badminton, making it accessible and enjoyable for everyone. Originating in 1965, pickleball can be played indoors or outdoors on a dedicated court. Whether played in singles (two players) or doubles (four players), the game involves hitting a perforated hollow plastic ball over a 36-inch-high net using solid-faced paddles. The court itself is the same size as a doubles badminton court, measuring 20×44 feet.
+
+![image](/images/blog-health-01.avif)
 
 ### The Health Benefits of Pickleball
 
