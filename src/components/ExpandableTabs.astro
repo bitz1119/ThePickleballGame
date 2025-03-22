@@ -1,0 +1,116 @@
+---
+import { Icon } from 'astro-icon/components';
+import Dropdown from './Dropdown.astro';
+
+interface Tab {
+  title: string;
+  icon: string;
+  href: string;
+  type?: never;
+}
+
+interface Separator {
+  type: "separator";
+  title?: never;
+  icon?: never;
+  href?: never;
+}
+
+type TabItem = Tab | Separator;
+
+interface Props {
+  tabs: TabItem[];
+  categories?: Array<{
+    title: string;
+    slug: string;
+    icon?: string;
+  }>;
+  activeColor?: string;
+  className?: string;
+}
+
+const {
+  tabs,
+  categories = [], // Default to an empty array if categories is undefined...
+  activeColor = "text-primary",
+  className = "",
+} = Astro.props;
+---
+
+<div
+  id="expandable-tabs"
+  class:list={[
+    "flex flex-wrap items-center gap-2 rounded-2xl border bg-background p-1 shadow-sm",
+    className
+  ]}
+>
+  <style>
+    .tab-title {
+      transition: opacity 0.6s ease, transform 0.6s ease, max-width 0.6s ease;
+      opacity: 0;
+      transform: translateX(-10px);
+      max-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .expandable-tab:hover .tab-title {
+      opacity: 1;
+      transform: translateX(0);
+      max-width: 100px;
+    }
+  </style>
+
+  {tabs.map((tab, index) => {
+    if ('type' in tab && tab.type === "separator") {
+      return <div class="bg-border items-center justify-between" aria-hidden="true"></div>;
+    }
+    //blog tab
+    if (tab.title === "Blog") {
+      const blogCategories = categories.map(category => ({
+        title: category.title,
+        href: `/generated-blog/${category.slug}`,
+        // icon: category.icon || "lucide:file-text", // Use a default icon if not is provided
+      }));
+
+      return (
+        <div class="relative group">
+          <a
+            href={'href' in tab ? tab.href : '#'}
+            data-index={index}
+            class:list={[
+              "expandable-tab relative flex items-center rounded-xl px-2 py-2 text-sm font-medium transition-colors duration-700",
+              "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ]}
+          >
+            <Icon name={tab.icon} size={20} />
+            <span class="tab-title">{tab.title}</span>
+          </a>
+
+          <!-- Dropdown Menu -->
+          <Dropdown
+            items={blogCategories}
+            label={tab.title}
+            icon={tab.icon}
+            className="absolute left-0 mt-2 w-48 rounded-lg shadow-lg bg-white bg-opacity-80 text-black border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-700 transform translate-y-2 group-hover:translate-y-0"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <a
+        href={'href' in tab ? tab.href : '#'}
+        data-index={index}
+        class:list={[
+          "expandable-tab relative flex items-center rounded-xl px-2 py-2 text-sm font-medium transition-colors duration-300",
+          "text-muted-foreground hover:bg-muted hover:text-foreground "
+        ]}
+      >
+        <Icon name={tab.icon} size={20} />
+        <span class="tab-title">{tab.title}</span>
+      </a>
+    );
+  })}
+</div>

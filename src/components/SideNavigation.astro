@@ -1,0 +1,148 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  categories?: Array<{
+    title: string;
+    slug: string;
+    icon?: string;
+  }>;
+}
+
+const { categories = [] } = Astro.props;
+
+// Define the navigation tabs with icons
+const navTabs = [
+  { title: "Home", icon: "lucide:home", href: "/" },
+  { title: "Blog", icon: "lucide:file-text", href: "/blog" },
+  { title: "Courts", icon: "lucide:map-pin", href: "/courts" },
+  { type: "separator" },
+  { title: "Equipment", icon: "lucide:shopping-bag", href: "/equipment" },
+  { title: "Rules", icon: "lucide:book", href: "/rules" },
+  { title: "Techniques", icon: "lucide:award", href: "/techniques" },
+];
+---
+
+<div id="side-navigation" class="lg:hidden">
+  <!-- Side Navigation Trigger -->
+  <button id="side-nav-trigger" class="text-white text-2xl focus:outline-none">
+    ☰
+  </button>
+
+  <!-- Side Navigation Overlay -->
+  <div id="side-nav-overlay" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden transition-opacity duration-300"></div>
+
+  <!-- Side Navigation Content -->
+  <div id="side-nav-content" class="fixed inset-y-0 right-0 w-64 bg-[#1E1E1E] z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
+    <div class="flex justify-end p-4">
+      <button id="side-nav-close" class="text-white text-2xl focus:outline-none">
+        &times;
+      </button>
+    </div>
+    <nav class="p-4">
+      <ul class="space-y-4">
+        {navTabs.map((tab) => {
+          if ('type' in tab && tab.type === "separator") {
+            return <div class="mx-1 h-[1px] bg-gray-700" aria-hidden="true"></div>;
+          }
+
+          if (tab.title === "Blog") {
+            return (
+              <li class="relative">
+                <button
+                  id="blog-dropdown-trigger"
+                  class="flex items-center justify-between w-full text-gray-300 hover:text-white transition-colors duration-200"
+                >
+                  <div class="flex items-center">
+                    <Icon name={tab.icon} size={20} class="mr-2" />
+                    <span>{tab.title}</span>
+                  </div>
+                  <Icon id="blog-dropdown-icon" name="lucide:chevron-right" size={20} class="transition-transform duration-200" />
+                </button>
+                <ul id="blog-dropdown" class="pl-6 mt-2 space-y-2 hidden transition-all duration-300 ease-in-out">
+                  {categories.map((category) => (
+                    <li>
+                      <a
+                        href={`/generated-blog/${category.slug}`}
+                        class="flex items-center text-gray-400 hover:text-white transition-colors duration-200"
+                      >
+                        <span>{category.title}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          }
+
+          return (
+            <li>
+              <a
+                href={tab.href}
+                class="flex items-center text-gray-300 hover:text-white transition-colors duration-200"
+              >
+                <Icon name={tab.icon} size={20} class="mr-2" />
+                <span>{tab.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+    <!-- Footer -->
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
+      <div class="flex items-center space-x-2">
+        <img src="/logo.png" alt="Logo" class="w-8 h-8" />
+        <span class="text-white text-lg font-bold">Pickleball Info</span>
+      </div>
+      <p class="mt-2 text-xs text-gray-400">
+        &copy; 2025 Pickleball Guide. All rights reserved.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mobile side navigation toggle
+  const sideNavTrigger = document.getElementById('side-nav-trigger');
+  const sideNavOverlay = document.getElementById('side-nav-overlay');
+  const sideNavContent = document.getElementById('side-nav-content');
+  const sideNavClose = document.getElementById('side-nav-close');
+
+  // Open Side Navigation
+  sideNavTrigger?.addEventListener('click', () => {
+    sideNavOverlay?.classList.remove('hidden');
+    setTimeout(() => {
+      sideNavOverlay?.classList.remove('opacity-0');
+      sideNavContent?.classList.remove('translate-x-full');
+    }, 10);
+  });
+
+  // Close Side Navigation
+  sideNavClose?.addEventListener('click', () => {
+    sideNavOverlay?.classList.add('opacity-0');
+    sideNavContent?.classList.add('translate-x-full');
+    setTimeout(() => {
+      sideNavOverlay?.classList.add('hidden');
+    }, 300);
+  });
+
+  // Close Side Navigation on Overlay Click
+  sideNavOverlay?.addEventListener('click', () => {
+    sideNavOverlay?.classList.add('opacity-0');
+    sideNavContent?.classList.add('translate-x-full');
+    setTimeout(() => {
+      sideNavOverlay?.classList.add('hidden');
+    }, 300);
+  });
+
+  // Blog Dropdown Toggle
+  const blogDropdownTrigger = document.getElementById('blog-dropdown-trigger');
+  const blogDropdown = document.getElementById('blog-dropdown');
+  const blogDropdownIcon = document.getElementById('blog-dropdown-icon');
+
+  blogDropdownTrigger?.addEventListener('click', () => {
+    const isOpen = blogDropdown.classList.toggle('hidden');
+    blogDropdownIcon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+  });
+</script>
