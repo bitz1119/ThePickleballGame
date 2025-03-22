@@ -1,0 +1,346 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { pickleballCourts as courtsData } from '../../data/pickleballCourts';
+
+// Filter unique pickleball courts based on their ID
+const uniquePickleballCourts = [...new Map(courtsData.map(court => [court.cid, court])).values()];
+
+// Count occurrences of each state
+const stateFrequency = uniquePickleballCourts.reduce((acc, court) => {
+  acc[court.state] = (acc[court.state] || 0) + 1;
+  return acc;
+}, {});
+
+// Get unique states for filter
+const uniqueStates = [...new Set(uniquePickleballCourts.map(court => court.state))].sort((a, b) => stateFrequency[b] - stateFrequency[a]);
+
+// Log the frequency of each state
+// console.table(
+//   uniqueStates.map(state => ({
+//     State: state,
+//     Courts: stateFrequency[state]
+//   }))
+// );
+
+const uniqueCountries = [...new Set(
+  uniquePickleballCourts
+    .map(court => {
+      if (court.countryCode === 'IN') {
+        return 'India';
+      }
+      if (court.countryCode === 'US') {
+        return 'United States';
+      }
+      // Handle other country codes or skip invalid ones
+      return null; // Return null for unhandled cases
+    })
+    .filter(country => country) // Remove null or undefined values
+)].sort();
+
+const ITEMS_PER_PAGE = 9;  // 3x3 grid
+
+// You can now use uniquePickleballCourts, uniqueStates, and uniqueCountries in your component
+
+---
+
+
+<Layout title="Pickleball Courts">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8 text-center">Pickleball Courts</h1>
+    
+    <!-- Search and Filter Controls -->
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="searchInput"
+            placeholder="Search courts..." 
+            class="w-full p-2 pr-10 border border-pink-600 bg-slate-50 text-black rounded-lg shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          <svg 
+            class="absolute right-3 top-2.5 h-5 w-5 text-pink-600" 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 20 20" 
+            fill="currentColor"
+          >
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+          </svg>
+        </div>
+      </div>
+      
+      <div class="flex gap-4">
+        <select 
+          id="stateFilter" 
+          class="w-full md:w-48 p-2 border border-pink-600 text-pink-600 font-bold bg-slate-50 rounded-lg shadow-sm focus:border-pink-400 focus:ring-1 focus:ring-pink-400"
+        >
+          <option value="all">All Regions</option>
+          {uniqueStates.map(state => (
+            <option value={state}>{state}</option>
+          ))}
+        </select>
+        <select 
+          id="countryFilter" 
+          class="w-full md:w-48 p-2 border border-pink-600 text-pink-600 font-bold bg-slate-50 rounded-lg shadow-sm focus:border-pink-400 focus:ring-1 focus:ring-pink-400"
+        >
+          <option value="all">All Countries</option>
+          {uniqueCountries.map(country => (
+            <option value={country}>{country}</option>
+          ))}
+        </select>
+        
+        <button 
+          id="resetFilters"
+          class="px-4 py-2 bg-pink-500 text-black font-bold rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="mb-4 text-sm text-gray-600">
+      Showing <span id="visibleCount">0</span> of <span id="totalCount">0</span> courts
+    </div>
+    
+    <!-- No Results Message -->
+    <div id="noResults" class="hidden text-center py-8 text-white">
+      No courts found matching your search criteria.
+    </div>
+    
+    <div id="courtsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {uniquePickleballCourts.map((court) => (
+        <div 
+          class="court-card bg-white text-black rounded-lg shadow-lg overflow-hidden" 
+          data-state={court.state}
+          data-country={court.countryCode}
+          data-name={court.title.toLowerCase()}
+        >
+          <!-- Court card content remains the same -->
+          <img 
+            src={court.imageUrl} 
+            alt={`${court.title} Courts`}
+            class="w-full h-48 object-cover"
+            loading="lazy"
+          />
+
+          <div class="p-4">
+            <h2 class="text-xl font-bold mb-2">{court.title}</h2>
+            <p class="text-gray-600 text-sm mb-3">{court.state}</p>
+            
+            <!-- Rest of the card content... -->
+            <a  href={`/courts/${court.cid}`} class="text-pink-400 hover:underline m-3 mt-8">
+					  	View Details →
+
+					</a>
+            {/* {console.log("Redirect to " , court.cid)} */}
+
+            <a
+              href={court.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mt-4 inline-block w-full text-center bg-pink-600 text-white py-2 px-4 rounded hover:bg-pink-700 transition-colors"
+            >
+              Get Directions
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="mt-8 flex justify-center items-center gap-2">
+      <button id="prevPage" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        Previous
+      </button>
+      <div id="pageNumbers" class="flex gap-2">
+        <!-- Page numbers will be inserted here -->
+      </div>
+      <button id="nextPage" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        Next
+      </button>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Type declarations
+  interface HTMLElementWithData extends HTMLElement {
+    dataset: {
+      country: string;
+      state: string;
+      name: string;
+    };
+  }
+
+  // Constants
+  const ITEMS_PER_PAGE = 9;
+
+  // Get DOM elements
+  const stateFilter = document.getElementById('stateFilter') as HTMLSelectElement;
+  const countryFilter = document.getElementById('countryFilter') as HTMLSelectElement;
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const resetButton = document.getElementById('resetFilters') as HTMLButtonElement;
+  const courtCards = document.querySelectorAll('.court-card');
+  const noResults = document.getElementById('noResults') as HTMLElement;
+  const visibleCount = document.getElementById('visibleCount') as HTMLElement;
+  const totalCount = document.getElementById('totalCount') as HTMLElement;
+  const prevPageBtn = document.getElementById('prevPage') as HTMLButtonElement;
+  const nextPageBtn = document.getElementById('nextPage') as HTMLButtonElement;
+  const pageNumbers = document.getElementById('pageNumbers') as HTMLElement;
+
+  let currentPage = 1;
+  let filteredCards: HTMLElementWithData[] = [];
+
+  // Filter function
+  function filterCourts() {
+  const selectedState = stateFilter.value;
+  const selectedCountry = countryFilter.value;
+  const searchTerm = searchInput.value.toLowerCase().trim();
+
+  // Map human-readable country names to country codes
+  const countryNameToCode = {
+    India: 'IN',
+    'United States': 'US',
+    // Add more countries as needed
+  };
+
+  const selectedCountryCode = 
+    selectedCountry === 'all' ? 'all' : countryNameToCode[selectedCountry];
+
+  // Reset pagination to first page
+  currentPage = 1;
+
+  // Filter cards
+  filteredCards = Array.from(courtCards).filter(card => {
+    const typedCard = card as HTMLElementWithData;
+    const matchesState = selectedState === 'all' || typedCard.dataset.state === selectedState;
+    const matchesCountry = selectedCountryCode === 'all' || typedCard.dataset.country === selectedCountryCode;
+    const matchesSearch = typedCard.dataset.name.includes(searchTerm);
+    return matchesState && matchesCountry && matchesSearch;
+  }) as HTMLElementWithData[];
+
+  // Update counts
+  visibleCount.textContent = filteredCards.length.toString();
+  totalCount.textContent = courtCards.length.toString();
+
+  // Show/hide no results message
+  noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
+
+  updatePagination();
+  displayCurrentPage();
+}
+
+
+  // Pagination functions
+  function updatePagination() {
+  const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE);
+  
+  // Update pagination buttons state
+  prevPageBtn.disabled = currentPage === 1;
+  nextPageBtn.disabled = currentPage === totalPages;
+
+  // Generate page numbers with ellipses
+  pageNumbers.innerHTML = '';
+  
+  const createPageButton = (pageNum: number, isCurrentPage: boolean) => {
+    const pageButton = document.createElement('button');
+    pageButton.className = `px-3 py-1 rounded-lg ${
+      isCurrentPage 
+        ? 'bg-blue-600 text-white' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`;
+    pageButton.textContent = pageNum.toString();
+    pageButton.addEventListener('click', () => {
+      currentPage = pageNum;
+      displayCurrentPage();
+      updatePagination();
+    });
+    return pageButton;
+  };
+
+  const createEllipsis = () => {
+    const ellipsis = document.createElement('span');
+    ellipsis.className = 'px-2 text-gray-600';
+    ellipsis.textContent = '...';
+    return ellipsis;
+  };
+
+  // Always show first page
+  pageNumbers.appendChild(createPageButton(1, currentPage === 1));
+
+  if (totalPages <= 7) {
+    // If total pages is 7 or less, show all pages
+    for (let i = 2; i < totalPages; i++) {
+      pageNumbers.appendChild(createPageButton(i, i === currentPage));
+    }
+  } else {
+    // Show pages with ellipses
+    if (currentPage > 3) {
+      pageNumbers.appendChild(createEllipsis());
+    }
+
+    // Show pages around current page
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      pageNumbers.appendChild(createPageButton(i, i === currentPage));
+    }
+
+    if (currentPage < totalPages - 2) {
+      pageNumbers.appendChild(createEllipsis());
+    }
+  }
+
+  // Always show last page if there is more than one page
+  if (totalPages > 1) {
+    pageNumbers.appendChild(createPageButton(totalPages, currentPage === totalPages));
+  }
+}
+
+  function displayCurrentPage() {
+    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIdx = startIdx + ITEMS_PER_PAGE;
+
+    // Hide all cards first
+    courtCards.forEach(card => {
+      (card as HTMLElement).style.display = 'none';
+    });
+
+    // Show only cards for current page
+    filteredCards.slice(startIdx, endIdx).forEach(card => {
+      card.style.display = 'block';
+    });
+  }
+
+  // Event listeners
+  stateFilter.addEventListener('change', filterCourts);
+  countryFilter.addEventListener('change', filterCourts);
+  searchInput.addEventListener('input', filterCourts);
+  
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      displayCurrentPage();
+      updatePagination();
+    }
+  });
+
+  nextPageBtn.addEventListener('click', () => {
+    const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE);
+    if (currentPage < totalPages) {
+      currentPage++;
+      displayCurrentPage();
+      updatePagination();
+    }
+  });
+
+  // Reset filters
+  resetButton.addEventListener('click', () => {
+    stateFilter.value = 'all';
+    searchInput.value = '';
+    currentPage = 1;
+    filterCourts();
+  });
+
+  // Initial setup
+  filterCourts();
+</script>
