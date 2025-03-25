@@ -1,5 +1,5 @@
 ---
-layout: ../../../layouts/BlogLayout.astro
+layout: ../../layouts/BlogLayout.astro
 title: "AIPA Launches India's First Pickleball Equipment Research and Testing Laboratory in Partnership with Brainwave SportsTech"
 date: "Jan 29, 2025"
 description: "India’s First Pickleball Equipment Research Lab Unveiled by All India Pickleball Association"

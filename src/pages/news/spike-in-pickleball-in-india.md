@@ -1,5 +1,5 @@
 ---
-layout: ../../../layouts/BlogLayout.astro 
+layout: ../../layouts/BlogLayout.astro 
 title: "India's Pickleball Explosion: 159 Percent Spike Signals Bright Future"
 date: "Sep 27,2024"
 description: "Pickleball, a sport that merges elements of tennis, badminton, and table tennis, has witnessed an extraordinary rise in popularity in India. Pickleball's appeal has surged globally, with over 5 million enthusiasts playing the sport across 84 countries."
