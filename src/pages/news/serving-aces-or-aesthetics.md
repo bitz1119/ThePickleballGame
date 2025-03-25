@@ -1,5 +1,5 @@
 ---
-layout: ../../../layouts/BlogLayout.astro 
+layout: ../../layouts/BlogLayout.astro 
 title: "Pickleball: Serving aces or aesthetics?"
 date: "Feb 20, 2025"
 description: "The inaugural Tamil Nadu Pickleball Premier League was a showcase of how Chennai has embraced the hitherto niche sport."

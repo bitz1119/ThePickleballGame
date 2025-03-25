@@ -1,5 +1,5 @@
 ---
-layout: ../../../layouts/BlogLayout.astro 
+layout: ../../layouts/BlogLayout.astro 
 title: "What’s contributing to the rise of pickleball as a recreational sport?"
 date: "August 20, 2024"
 description: "The learning curve is gentle, making it suitable for all ages and fitness levels, shared Ujwal Deole, co-founder, chief operating officer, KheloMore"

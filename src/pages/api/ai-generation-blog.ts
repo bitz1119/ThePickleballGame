@@ -133,7 +133,7 @@ const BlogSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   chapters: z.array(ChapterSchema),
-  outputDir: z.string().optional().default("./src/pages/generated-blog"),
+  outputDir: z.string().optional().default("./src/pages/information"),
 });
 
 type BlogStructure = z.infer<typeof BlogSchema>;

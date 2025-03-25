@@ -1,5 +1,5 @@
 ---
-layout: ../../../layouts/BlogLayout.astro 
+layout: ../../layouts/BlogLayout.astro 
 title: "Top 5 Health Benefits of Pickleball"
 date: "June 02, 2023"
 description: "health benefits of pickleball"

@@ -13,7 +13,7 @@ const categories = [
     title: 'Courts & Community',
     description: 'Reviews and guides about pickleball gear',
     icon: '🏓',
-    slug: 'equipment',
+    slug: 'Community',
     gradient: 'from-blue-500 to-indigo-700'
   },
   {
@@ -47,7 +47,7 @@ const categories = [
     <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
       {categories.map(category => (
         <a 
-          href={`/generated-blog/${category.slug}`}
+          href={`/${category.slug}`}
           class="group relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.16)] border border-gray-200/50 dark:border-gray-700/50 overflow-hidden transition-all duration-300 hover:-translate-y-1"
         >
           <div class={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
