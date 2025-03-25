@@ -1,5 +1,5 @@
 ---
-layout: ../../../layouts/BlogLayout.astro 
+layout: ../../layouts/BlogLayout.astro 
 title: "Is Pickleball a Good Workout? 6 Benefits for Your Body and Mind"
 date: "Nov 03, 2024"
 description: "health benefits of pickleball"
