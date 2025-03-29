@@ -1,6 +1,9 @@
 ---
+import '../styles/globals.css'
 import ExpandableTabs from '../components/ExpandableTabs.astro';
 import SideNavigation from '../components/SideNavigation.astro';
+import { blogCategories } from '../data/blogCategories';
+import { navTabs } from '../data/navigation';
 
 interface Props {
   title: string;
@@ -10,18 +13,22 @@ interface Props {
     icon?: string;
   }>;
 }
-const { title, categories = [] } = Astro.props;
+
+// Use provided categories or fallback to blogCategories
+const { title, categories = blogCategories } = Astro.props;
+
 
 // Define the navigation tabs with icons
-const navTabs = [
-  { title: "Home", icon: "lucide:home", href: "/" },
-  { title: "Blog", icon: "lucide:file-text", href: "/blog" },
-  { title: "Courts", icon: "lucide:map-pin", href: "/courts" },
-  { type: "separator" },
-  { title: "Equipment", icon: "lucide:shopping-bag", href: "/equipment" },
-  { title: "Rules", icon: "lucide:book", href: "/rules" },
-  { title: "Techniques", icon: "lucide:award", href: "/techniques" },
-];
+// const navTabs = [
+//   { title: "Home", icon: "lucide:home", href: "/" },
+//   { title: "Blog", icon: "lucide:file-text", href: "/blog" },
+//   { title: "Courts", icon: "lucide:map-pin", href: "/courts" },
+//   { type: "separator" },
+//   { title: "Equipment", icon: "lucide:shopping-bag", href: "/equipment" },
+//   { title: "Rules", icon: "lucide:book", href: "/rules" },
+//   { title: "Techniques", icon: "lucide:award", href: "/techniques" },
+// ];
+
 ---
 
 <!doctype html>
@@ -56,7 +63,7 @@ const navTabs = [
             tabs={navTabs} 
             categories={categories} 
             activeColor="text-white" 
-            className="border-purple-700 bg-opacity-20 bg-purple-900"
+            className="border-purple-700 bg-opacity-70 bg-white"
           />
         </div>
       </nav>

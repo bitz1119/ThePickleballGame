@@ -1,39 +1,12 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
+import { blogCategories } from '../../data/blogCategories';
 
-const categories = [
-  {
-    title: 'Gear & Fitness',
-    description: 'Tips and insights for maintaining your pickleball health',
-    icon: '❤️',
-    slug: 'health',
-    gradient: 'from-green-500 to-emerald-700'
-  },
-  {
-    title: 'Courts & Community',
-    description: 'Reviews and guides about pickleball gear',
-    icon: '🏓',
-    slug: 'equipment',
-    gradient: 'from-blue-500 to-indigo-700'
-  },
-  {
-    title: 'Game Basics',
-    description: 'Everything you need to know about pickleball',
-    icon: 'ℹ️',
-    slug: 'information',
-    gradient: 'from-purple-500 to-violet-700'
-  },
-  {
-    title: 'News & Events',
-    description: 'Latest updates from the pickleball world',
-    icon: '📰',
-    slug: 'news',
-    gradient: 'from-pink-500 to-rose-700'
-  }
-];
+console.log('Blog Index - Using categories:', blogCategories);
 ---
 
-<Layout title="Pickleball Blog" categories={categories}>
+<Layout title="Pickleball Blog" categories={blogCategories}>
   <div class="w-full max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
     <header class="text-center mb-16">
       <h1 class="text-5xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent mb-6">
@@ -45,7 +18,7 @@ const categories = [
     </header>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-      {categories.map(category => (
+      {blogCategories.map(category => (
         <a 
           href={`/generated-blog/${category.slug}`}
           class="group relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.16)] border border-gray-200/50 dark:border-gray-700/50 overflow-hidden transition-all duration-300 hover:-translate-y-1"
@@ -53,7 +26,7 @@ const categories = [
           <div class={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
           <div class="relative p-8">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-4xl">{category.icon}</span>
+              <Icon name={category.icon} class="w-8 h-8" />
               <svg class="w-6 h-6 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-400 transform group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>

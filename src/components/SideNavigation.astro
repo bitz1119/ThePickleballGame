@@ -1,5 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components';
+import { navTabs } from '../data/navigation';
 
 interface Props {
   categories?: Array<{
@@ -10,17 +11,6 @@ interface Props {
 }
 
 const { categories = [] } = Astro.props;
-
-// Define the navigation tabs with icons
-const navTabs = [
-  { title: "Home", icon: "lucide:home", href: "/" },
-  { title: "Blog", icon: "lucide:file-text", href: "/blog" },
-  { title: "Courts", icon: "lucide:map-pin", href: "/courts" },
-  { type: "separator" },
-  { title: "Equipment", icon: "lucide:shopping-bag", href: "/equipment" },
-  { title: "Rules", icon: "lucide:book", href: "/rules" },
-  { title: "Techniques", icon: "lucide:award", href: "/techniques" },
-];
 ---
 
 <div id="side-navigation" class="lg:hidden">
@@ -42,7 +32,7 @@ const navTabs = [
     <nav class="p-4">
       <ul class="space-y-4">
         {navTabs.map((tab) => {
-          if ('type' in tab && tab.type === "separator") {
+          if (tab.type === "separator") {
             return <div class="mx-1 h-[1px] bg-gray-700" aria-hidden="true"></div>;
           }
 
@@ -57,15 +47,26 @@ const navTabs = [
                     <Icon name={tab.icon} size={20} class="mr-2" />
                     <span>{tab.title}</span>
                   </div>
-                  <Icon id="blog-dropdown-icon" name="lucide:chevron-right" size={20} class="transition-transform duration-200" />
+                  <Icon 
+                    name="lucide:chevron-down" 
+                    size={20} 
+                    class="transform transition-transform duration-200" 
+                    id="blog-dropdown-icon"
+                  />
                 </button>
-                <ul id="blog-dropdown" class="pl-6 mt-2 space-y-2 hidden transition-all duration-300 ease-in-out">
+                <ul 
+                  id="blog-dropdown" 
+                  class="pl-6 mt-2 space-y-2 hidden transition-all duration-300 ease-in-out"
+                >
                   {categories.map((category) => (
                     <li>
                       <a
                         href={`/generated-blog/${category.slug}`}
-                        class="flex items-center text-gray-400 hover:text-white transition-colors duration-200"
+                        class="flex items-center text-gray-400 hover:text-white transition-colors duration-200 py-2"
                       >
+                        {category.icon && (
+                          <Icon name={category.icon} size={20} class="mr-2" />
+                        )}
                         <span>{category.title}</span>
                       </a>
                     </li>
@@ -96,7 +97,7 @@ const navTabs = [
         <span class="text-white text-lg font-bold">Pickleball Info</span>
       </div>
       <p class="mt-2 text-xs text-gray-400">
-        &copy; 2025 Pickleball Guide. All rights reserved.
+        &copy; {new Date().getFullYear()} Pickleball Guide. All rights reserved.
       </p>
     </div>
   </div>
@@ -108,6 +109,9 @@ const navTabs = [
   const sideNavOverlay = document.getElementById('side-nav-overlay');
   const sideNavContent = document.getElementById('side-nav-content');
   const sideNavClose = document.getElementById('side-nav-close');
+  const blogDropdownTrigger = document.getElementById('blog-dropdown-trigger');
+  const blogDropdown = document.getElementById('blog-dropdown');
+  const blogDropdownIcon = document.getElementById('blog-dropdown-icon');
 
   // Open Side Navigation
   sideNavTrigger?.addEventListener('click', () => {
@@ -119,30 +123,46 @@ const navTabs = [
   });
 
   // Close Side Navigation
-  sideNavClose?.addEventListener('click', () => {
+  const closeSideNav = () => {
     sideNavOverlay?.classList.add('opacity-0');
     sideNavContent?.classList.add('translate-x-full');
     setTimeout(() => {
       sideNavOverlay?.classList.add('hidden');
     }, 300);
-  });
+  };
 
-  // Close Side Navigation on Overlay Click
-  sideNavOverlay?.addEventListener('click', () => {
-    sideNavOverlay?.classList.add('opacity-0');
-    sideNavContent?.classList.add('translate-x-full');
-    setTimeout(() => {
-      sideNavOverlay?.classList.add('hidden');
-    }, 300);
-  });
+  sideNavClose?.addEventListener('click', closeSideNav);
+  sideNavOverlay?.addEventListener('click', closeSideNav);
 
   // Blog Dropdown Toggle
-  const blogDropdownTrigger = document.getElementById('blog-dropdown-trigger');
-  const blogDropdown = document.getElementById('blog-dropdown');
-  const blogDropdownIcon = document.getElementById('blog-dropdown-icon');
-
+  let isDropdownOpen = false;
+  
   blogDropdownTrigger?.addEventListener('click', () => {
-    const isOpen = blogDropdown.classList.toggle('hidden');
-    blogDropdownIcon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+    isDropdownOpen = !isDropdownOpen;
+    if (isDropdownOpen) {
+      blogDropdown?.classList.remove('hidden');
+      blogDropdownIcon?.classList.add('rotate-180');
+      // Animate items
+      const items = blogDropdown?.querySelectorAll('li');
+      items?.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+          item.style.opacity = '1';
+          item.style.transform = 'translateY(0)';
+        }, index * 100);
+      });
+    } else {
+      blogDropdown?.classList.add('hidden');
+      blogDropdownIcon?.classList.remove('rotate-180');
+    }
   });
 </script>
+
+<style>
+  #blog-dropdown li {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease-out;
+  }
+</style>
