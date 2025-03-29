@@ -8,7 +8,7 @@ const client = await clientPromise;
 const db = client.db('google_maps_data');
 
 // Get all courts
-let courts = await db.collection('pickleball_courts').find({}).limit(10).toArray(); //add limit 100 for testing as tavily api hasnt full filled updating all courts data as api limit has been reached..
+let courts = await db.collection('pickleball_courts').find({}).toArray(); //add limit 100 for testing as tavily api hasnt full filled updating all courts data as api limit has been reached..
 
 /*  the tavily api limit is maxsed out right now 
    When got more api credits, uncomwment this section to fetch image for court.
