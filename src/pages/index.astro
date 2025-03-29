@@ -1,72 +1,28 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import Hero from "../components/Hero";
+import Stats from "../components/Stats";
+import Discover from "../components/Discover";
+import GetStarted from "../components/GetStarted";
+import Benefits from "../components/Benefits";
+import BasicTechniques from "../components/Techniques";
+import VideoSection from '../components/VideoSection';
 ---
 
 <Layout title="welcome">
   <div
     class="bg-gradient-to-r from-purple-900 via-pink-900 to-blue-900 min-h-screen text-white"
   >
-    <!-- Hero Section -->
-    <!-- <section class="max-w-6xl mx-auto text-center py-20">
-      <h1 class="text-5xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text">
-        Master the Game of Pickleball
-      </h1>
-      <p class="mt-4 text-lg text-gray-300">
-        Join the fastest-growing sport in America. Learn, play, and excel with our comprehensive guide to pickleball.
-      </p>
-      <div class="mt-8 flex justify-center space-x-4">
-        <a href="/get-started" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300">
-          Get Started
-        </a>
-        <a href="/blog" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300">
-          Learn More
-        </a>
-      </div>
-    </section> -->
-
-    <!-- Hero Section -->
-    <section
-      class="max-w-6xl mx-auto py-20 flex flex-col md:flex-row items-center"
-    >
-      <!-- Text Content -->
-      <div class="text-center md:text-left md:w-1/2 px-4">
-        <h1
-          class="text-5xl font-extrabold bg-gradient-to-r text-white text-transparent bg-clip-text"
-        >
-          Master the Game of Pickleball
-        </h1>
-        <p class="mt-4 text-lg text-gray-300">
-          Join the fastest-growing sport in America. Learn, play, and excel with
-          our comprehensive guide to pickleball.
-        </p>
-        <div class="mt-8 flex justify-center md:justify-start space-x-4">
-          <a
-            href="/get-started"
-            class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300"
-          >
-            Get Started
-          </a>
-          <a
-            href="/blog"
-            class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300"
-          >
-            Learn More
-          </a>
-        </div>
-      </div>
-
-      <!-- Image Content -->
-      <div class="mt-10 md:mt-0 md:w-1/2 flex justify-center">
-        <img
-          src="/demopickleball.jpg"
-          alt="Pickleball Game"
-          class="rounded-lg shadow-lg"
-        />
-      </div>
-    </section>
+    <Hero client:load />
+    <Stats client:load />
+    <Discover client:visible />
+    <GetStarted client:visible />
+    <Benefits client:visible />
+    <VideoSection client:visible />
+    <BasicTechniques client:visible />
 
     <!-- Stats Section -->
-    <section class="py-12">
+    <!-- <section class="py-12">
       <div class="grid grid-cols-2 md:grid-cols-4 max-w-4xl mx-auto gap-6">
         <div class="bg-gray-800 text-center p-6 rounded-xl shadow-lg">
           <h2 class="text-3xl font-bold text-purple-400">2.5M+</h2>
@@ -85,17 +41,17 @@ import Layout from "../layouts/Layout.astro";
           <p class="text-gray-300 mt-2">Growth Rate</p>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- discovery section -->
-    <section class="py-12 bg-[#121212]">
+    <!-- <section class="py-12 bg-[#121212]">
       <div class="max-w-6xl mx-auto text-center">
         <h2 class="text-3xl font-bold text-pink-500 mb-8">
           Discover Pickleball
         </h2>
-        <!-- Heading -->
+         Heading
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Left Section -->
+
           <div
             class="bg-[#1E1E1E] p-8 rounded-xl shadow-lg border border-gray-700"
           >
@@ -122,10 +78,10 @@ import Layout from "../layouts/Layout.astro";
                 Unique scoring system
               </li>
             </ul>
-          </div>
+          </div> -->
 
-          <!-- Right Section -->
-          <div
+
+          <!-- <div
             class="bg-[#1E1E1E] p-8 rounded-xl shadow-lg border border-gray-700"
           >
             <h2 class="text-3xl font-bold text-pink-400 mb-4">
@@ -174,20 +130,20 @@ import Layout from "../layouts/Layout.astro";
           </div>
         </div>
       </div>
-    </section>
+    </section> -->
 
-    <!-- Getting Started Section -->
-    <section class="bg-black py-10">
+
+    <!-- <section class="bg-black py-10">
       <div class="container mx-auto text-center">
-        <!-- Heading with underline -->
+
         <h2 class="text-4xl font-bold text-pink-500 mb-6">
           Getting Started with Pickleball
         </h2>
         <div class="border-b-2 border-pink-500 w-24 mx-auto mb-10"></div>
 
-        <!-- Card Grid -->
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
-          <!-- Equipment Guide -->
+
           <div
             class="bg-[#1E1E1E] text-purple-300 p-6 rounded-lg shadow-md transform transition hover:scale-105"
           >
@@ -211,7 +167,7 @@ import Layout from "../layouts/Layout.astro";
             >
           </div>
 
-          <!-- Rules & Scoring -->
+
           <div
             class="bg-[#1E1E1E] text-pink-300 p-6 rounded-lg shadow-md transform transition hover:scale-105"
           >
@@ -233,10 +189,10 @@ import Layout from "../layouts/Layout.astro";
               class="text-pink-400 mt-4 inline-block hover:underline text-sm"
               >Learn more →</a
             >
-          </div>
+          </div> -->
 
-          <!-- Basic Techniques -->
-          <div
+
+          <!-- <div
             class="bg-[#1E1E1E] text-blue-300 p-6 rounded-lg shadow-md transform transition hover:scale-105"
           >
             <div
@@ -258,10 +214,10 @@ import Layout from "../layouts/Layout.astro";
               >Learn more →</a
             >
           </div>
-        </div>
+        </div> -->
 
-        <!-- Call to Action Button -->
-        <a href="/courts">
+        
+        <!-- <a href="/courts">
           <button
             class="mt-12 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white text-lg px-8 py-3 rounded-full shadow-lg transform transition hover:scale-105 hover:shadow-2xl"
           >
@@ -271,10 +227,10 @@ import Layout from "../layouts/Layout.astro";
       </div>
     </section>
 
-    <!-- benefits section -->
+
     <section class="bg-black py-10">
       <div class="container mx-auto text-center px-4 md:px-8">
-        <!-- Section Title -->
+       
         <h2 class="text-3xl md:text-4xl font-bold text-pink-500 mb-4">
           Benefits of Pickleball
         </h2>
@@ -283,9 +239,9 @@ import Layout from "../layouts/Layout.astro";
         >
         </div>
 
-        <!-- Benefit Cards -->
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Physical Health Card -->
+
           <div class="bg-[#1E1E1E] text-purple-300 p-6 rounded-lg shadow-md">
             <div class="text-3xl md:text-4xl mb-4">
               <span class="text-yellow-400">🏃‍♂️</span>
@@ -300,7 +256,6 @@ import Layout from "../layouts/Layout.astro";
             </ul>
           </div>
 
-          <!-- Social Benefits Card -->
           <div class="bg-[#1E1E1E] text-pink-300 p-6 rounded-lg shadow-md">
             <div class="text-3xl md:text-4xl mb-4">
               <span class="text-yellow-400">🤝</span>
@@ -315,7 +270,7 @@ import Layout from "../layouts/Layout.astro";
             </ul>
           </div>
 
-          <!-- Mental Wellness Card -->
+
           <div class="bg-[#1E1E1E] text-blue-300 p-6 rounded-lg shadow-md">
             <div class="text-3xl md:text-4xl mb-4">
               <span class="text-pink-400">🧠</span>
@@ -331,7 +286,7 @@ import Layout from "../layouts/Layout.astro";
           </div>
         </div>
 
-        <!-- Statistics Section -->
+
         <div
           class="ml-20 mr-20 mt-12 grid grid-cols-1 gap-6 rounded-full bg-gradient-to-br from-gray-900 to-black text-center text-white md:grid-cols-2 lg:grid-cols-4"
         >
@@ -357,15 +312,15 @@ import Layout from "../layouts/Layout.astro";
       </div>
     </section>
 
-    <!-- Basic Techniques -->
+
     <section class="bg-black text-white py-12 px-6">
       <h1 class="text-center text-3xl font-bold text-pink-500 mb-8">
         Basic Techniques & Strategies
       </h1>
 
-      <!-- Main Cards Section -->
+
       <div class="flex flex-col md:flex-row gap-6 justify-center items-center">
-        <!-- Card 1: Serving Techniques -->
+
         <div
           class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
         >
@@ -382,7 +337,7 @@ import Layout from "../layouts/Layout.astro";
           </ul>
         </div>
 
-        <!-- Card 2: Basic Shots -->
+
         <div
           class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
         >
@@ -397,7 +352,6 @@ import Layout from "../layouts/Layout.astro";
           </ul>
         </div>
 
-        <!-- Card 3: Strategy Tips -->
         <div
           class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
         >
@@ -411,7 +365,7 @@ import Layout from "../layouts/Layout.astro";
             <li>• Patient shot selection</li>
           </ul>
         </div>
-      </div>
+      </div> -->
 
       <!-- Pro Tips Section -->
       <!-- <div class="mt-12 bg-black rounded-lg p-6">
@@ -436,14 +390,14 @@ import Layout from "../layouts/Layout.astro";
 	 </div> -->
     </section>
 
-    <!-- Video Section -->
-    <section
+
+    <!-- <section
       class="relative bg-gradient-to-b from-gray-900 to-black px-6 py-16 text-white"
     >
       <div
         class="mx-auto flex max-w-7xl flex-col-reverse items-center gap-12 lg:flex-row lg:items-start"
       >
-        <!-- Text Content -->
+
         <div class="w-full text-center lg:w-1/2 lg:text-left">
           <h2
             class="mb-8 text-3xl font-bold text-pink-500 md:text-4xl lg:text-5xl"
@@ -458,7 +412,7 @@ import Layout from "../layouts/Layout.astro";
             and connect with others in this fast-growing sport under sunny
             Florida skies!
           </p>
-          <!-- Action Button -->
+
           <div>
             <a
               href="/blog"
@@ -467,10 +421,10 @@ import Layout from "../layouts/Layout.astro";
               Discover Pickleball
             </a>
           </div>
-        </div>
+        </div> -->
 
-        <!-- Video Container -->
-        <div class="mx-auto w-full lg:w-1/2">
+
+        <!-- <div class="mx-auto w-full lg:w-1/2">
           <div
             class="overflow-hidden rounded-lg border-4 border-pink-500 shadow-lg"
           >
@@ -485,7 +439,7 @@ import Layout from "../layouts/Layout.astro";
         </div>
       </div>
 
-      <!-- Decorative Elements -->
+
       <div
         class="pointer-events-none absolute left-0 top-0 h-full w-1/3 bg-gradient-to-r from-pink-500 to-transparent opacity-30"
       >
@@ -496,20 +450,20 @@ import Layout from "../layouts/Layout.astro";
       </div>
     </section>
 
-    <!-- Testimonial Section -->
+
     <section class="bg-black text-white py-12 px-6">
       <h1 class="text-center text-3xl font-bold text-pink-500 mb-8">
         Player Testimonials
       </h1>
 
-      <!-- Testimonials Wrapper -->
+
       <div class="flex flex-col md:flex-row gap-6 justify-center items-center">
-        <!-- Testimonial 1 -->
+
         <div
           class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
         >
           <div class="flex justify-center mb-2">
-            <!-- User's profile image from X.com (formerly Twitter) -->
+
             <img
               src="https://pbs.twimg.com/profile_images/1744067778712059904/S3upteq5_400x400.jpg"
               alt="User Profile"
@@ -517,7 +471,7 @@ import Layout from "../layouts/Layout.astro";
             />
           </div>
 
-          <!-- Embedded Tweet Section -->
+
           <div class="text-white p-4 rounded-lg border border-gray-700 mb-4">
             <blockquote class="twitter-tweet">
               <a href="https://x.com/Diana_Sierra__/status/1809713132765335657">
@@ -536,12 +490,12 @@ import Layout from "../layouts/Layout.astro";
           <p class="text-xs text-gray-400">Vice Mayor of Milagro.</p>
         </div>
 
-        <!-- Testimonial 2 -->
+
         <div
           class="bg-[#1E1E1E] rounded-lg shadow-md p-6 w-full md:w-1/3 text-center"
         >
           <div class="flex justify-center mb-2">
-            <!-- User's profile image from X.com (formerly Twitter) -->
+
             <img
               src="https://pbs.twimg.com/profile_images/1757141506882670592/wgJqBWey_400x400.jpg"
               alt="User Profile"
@@ -549,15 +503,15 @@ import Layout from "../layouts/Layout.astro";
             />
           </div>
 
-          <!-- Embedded Tweet Section -->
+
           <div class="text-white p-4 rounded-lg border border-gray-700 mb-4">
             <blockquote class="twitter-tweet">
               <a href="https://x.com/icyconnor1/status/1673839586013769728">
                 <p lang="en" dir="ltr">
-                  “Junior is for recruiting, June is one of the biggest months
-                  for recruiting. It’s the start of a big summer recruiting
-                  season” jd pickell knows ball. Florida state fans who say June
-                  rankings/commits don’t matter don’t know ball. Jd pickell is
+                  "Junior is for recruiting, June is one of the biggest months
+                  for recruiting. It's the start of a big summer recruiting
+                  season" jd pickell knows ball. Florida state fans who say June
+                  rankings/commits don't matter don't know ball. Jd pickell is
                   verified in my books ✅ 5:13 AM · Jun 28, 2023
                 </p>
               </a>
@@ -567,12 +521,11 @@ import Layout from "../layouts/Layout.astro";
           <p class="font-bold text-purple-400">icyconnor1</p>
         </div>
 
-        <!-- Testimonial 3 -->
         <div
           class="w-full rounded-lg bg-[#1E1E1E] p-6 text-center shadow-md md:w-1/3"
         >
           <div class="mb-2 flex justify-center">
-            <!-- User's profile image from X.com (formerly Twitter) -->
+
             <img
               src="https://pbs.twimg.com/profile_images/1668718669663203328/AtZHwMsm_400x400.jpg"
               alt="User Profile"
@@ -580,12 +533,12 @@ import Layout from "../layouts/Layout.astro";
             />
           </div>
 
-          <!-- Embedded Tweet Section -->
+
           <div class="mb-4 rounded-lg border border-gray-700 p-4 text-white">
             <blockquote class="twitter-tweet">
               <a href="https://x.com/jdpickell/status/1847789491802579125">
                 <p lang="en" dir="ltr">
-                  The thing that’s encouraging if you’re Tennessee, you played
+                  The thing that's encouraging if you're Tennessee, you played
                   nowhere near your best ball and still beat Alabama 5:28 AM ·
                   Oct 20, 2024
                 </p>
@@ -602,12 +555,12 @@ import Layout from "../layouts/Layout.astro";
           </p>
         </div>
 
-        <!-- Include Twitter Embed Script -->
+
         <script
           async
           src="https://platform.twitter.com/widgets.js"
           charset="utf-8"></script>
-      </div>
+      </div> -->
     </section>
   </div>
 </Layout>

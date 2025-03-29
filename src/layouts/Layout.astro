@@ -1,9 +1,34 @@
 ---
+import '../styles/globals.css'
+import ExpandableTabs from '../components/ExpandableTabs.astro';
+import SideNavigation from '../components/SideNavigation.astro';
+import { blogCategories } from '../data/blogCategories';
+import { navTabs } from '../data/navigation';
+
 interface Props {
   title: string;
+  categories?: Array<{
+    title: string;
+    slug: string;
+    icon?: string;
+  }>;
 }
 
-const { title } = Astro.props;
+// Use provided categories or fallback to blogCategories
+const { title, categories = blogCategories } = Astro.props;
+
+
+// Define the navigation tabs with icons
+// const navTabs = [
+//   { title: "Home", icon: "lucide:home", href: "/" },
+//   { title: "Blog", icon: "lucide:file-text", href: "/blog" },
+//   { title: "Courts", icon: "lucide:map-pin", href: "/courts" },
+//   { type: "separator" },
+//   { title: "Equipment", icon: "lucide:shopping-bag", href: "/equipment" },
+//   { title: "Rules", icon: "lucide:book", href: "/rules" },
+//   { title: "Techniques", icon: "lucide:award", href: "/techniques" },
+// ];
+
 ---
 
 <!doctype html>
@@ -20,47 +45,26 @@ const { title } = Astro.props;
   </head>
   <body class="bg-gradient-to-br bg-[#1E1E1E] text-gray-100 min-h-screen">
     <header class="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
-			<nav class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-			  <!-- Logo or Title -->
-			  <div class="flex items-center">
-				<img src="/logo.png" alt="Logo" class="w-10 h-10 mr-3">
-				<span class="text-white text-lg font-bold">
-				  <a href="/">Pickleball Info</a>
-				</span>
-			  </div>
-		  
-			  <!-- Hamburger Icon -->
-			  <button id="hamburger" class="lg:hidden text-white text-2xl focus:outline-none">
-				☰
-			  </button>
-		  
-			  <!-- Navigation Links (Desktop) -->
-			  <ul class="hidden lg:flex space-x-6">
-				<li><a href="/" class="hover:text-white transition-colors">Home</a></li>
-				<li><a href="/blog" class="hover:text-white transition-colors">Blog</a></li>
-				<li><a href="/courts" class="hover:text-white transition-colors">Courts</a></li>
-				<li><a href="/equipment" class="hover:text-white transition-colors">Equipment</a></li>
-				<li><a href="/rules" class="hover:text-white transition-colors">Rules</a></li>
-				<li><a href="/techniques" class="hover:text-white transition-colors">Techniques</a></li>
-			  </ul>
-			</nav>
-		  </header>
-       <!-- Modal -->
-		  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50  items-center justify-center ">
-        <div class="bg-white w-4/5 max-w-md rounded-lg p-6 text-center">
-          <!-- Close Button -->
-          <button id="closeModal" class="absolute top-4 right-4 text-2xl text-gray-500 hover:text-gray-700 focus:outline-none">
-          &times;
-          </button>
-          <ul class="space-y-4">
-          <li><a href="/" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Home</a></li>
-          <li><a href="/blog" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Blog</a></li>
-          <li><a href="/courts" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Courts</a></li>
-          <li><a href="/equipment" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Equipment</a></li>
-          <li><a href="/rules" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Rules</a></li>
-          <li><a href="/techniques" class="text-lg text-gray-800 hover:text-purple-600 transition-colors">Techniques</a></li>
-          </ul>
+      <nav class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+        <!-- Logo or Title -->
+        <div class="flex items-center">
+          <img src="/logo.png" alt="Logo" class="w-10 h-10 mr-3">
+          <span class="text-white text-lg font-bold">
+            <a href="/">Pickleball Info</a>
+          </span>
         </div>
+        
+        <!-- Side Navigation for Mobile -->
+        <SideNavigation categories={categories} />
+        
+        <!-- Expandable Tabs Navigation (Desktop) -->
+        <div class="hidden lg:block">
+          <ExpandableTabs 
+            tabs={navTabs} 
+            categories={categories} 
+            activeColor="text-white" 
+            className="border-purple-700 bg-opacity-70 bg-white"
+          />
         </div>
     <main class="py-8 px-4">
       <slot />
