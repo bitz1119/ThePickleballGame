@@ -1,13 +1,7 @@
 ---
 import { Icon } from 'astro-icon/components';
 import Dropdown from './Dropdown.astro';
-
-interface Tab {
-  title: string;
-  icon: string;
-  href: string;
-  type?: never;
-}
+import type { TabItem } from '../data/navigation';
 
 interface Separator {
   type: "separator";
@@ -16,7 +10,7 @@ interface Separator {
   href?: never;
 }
 
-type TabItem = Tab | Separator;
+type TabItem = TabItem | Separator;
 
 interface Props {
   tabs: TabItem[];
@@ -31,10 +25,11 @@ interface Props {
 
 const {
   tabs,
-  categories = [], // Default to an empty array if categories is undefined...
-  activeColor = "text-primary",
+  categories = [],
+  activeColor = "text-gray-900",
   className = "",
 } = Astro.props;
+
 ---
 
 <div
@@ -60,40 +55,73 @@ const {
       transform: translateX(0);
       max-width: 100px;
     }
+
+    .expandable-tab {
+      transition: all 0.3s ease;
+    }
+    
+    .expandable-tab:hover {
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+    
+    .expandable-tab:hover .tab-title,
+    .expandable-tab:hover .expandable-tab-icon {
+      color: white;
+    }
+    
+    .expandable-tab-icon {
+      color: black;
+      transition: color 0.3s ease;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      min-width: 200px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      z-index: 50;
+      margin-top: 0.5rem;
+    }
+
+    .blog-tab-container:hover .dropdown-menu {
+      display: block;
+    }
   </style>
 
   {tabs.map((tab, index) => {
     if ('type' in tab && tab.type === "separator") {
       return <div class="bg-border items-center justify-between" aria-hidden="true"></div>;
     }
-    //blog tab
+
     if (tab.title === "Blog") {
-      const blogCategories = categories.map(category => ({
+      const blogItems = categories.map(category => ({
         title: category.title,
         href: `/generated-blog/${category.slug}`,
-        // icon: category.icon || "lucide:file-text", // Use a default icon if not is provided
+        icon: category.icon || "lucide:file-text"
       }));
 
       return (
         <div class="relative group">
           <a
-            href={'href' in tab ? tab.href : '#'}
-            data-index={index}
+            href={tab.href}
             class:list={[
-              "expandable-tab relative flex items-center rounded-xl px-2 py-2 text-sm font-medium transition-colors duration-700",
-              "text-muted-foreground hover:bg-muted hover:text-foreground"
+              "expandable-tab relative flex items-center rounded-xl px-2 py-2 text-sm font-medium"
             ]}
           >
-            <Icon name={tab.icon} size={20} />
-            <span class="tab-title">{tab.title}</span>
+            <Icon name={tab.icon} size={20} class="expandable-tab-icon" />
+            <span class="tab-title ml-2">{tab.title}</span>
           </a>
 
-          <!-- Dropdown Menu -->
           <Dropdown
-            items={blogCategories}
+            items={blogItems}
             label={tab.title}
             icon={tab.icon}
-            className="absolute left-0 mt-2 w-48 rounded-lg shadow-lg bg-white bg-opacity-80 text-black border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-700 transform translate-y-2 group-hover:translate-y-0"
+            className="absolute left-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform -translate-y-2 group-hover:translate-y-0"
           />
         </div>
       );
@@ -104,12 +132,11 @@ const {
         href={'href' in tab ? tab.href : '#'}
         data-index={index}
         class:list={[
-          "expandable-tab relative flex items-center rounded-xl px-2 py-2 text-sm font-medium transition-colors duration-300",
-          "text-muted-foreground hover:bg-muted hover:text-foreground "
+          "expandable-tab relative flex items-center rounded-xl px-2 py-2 text-sm font-medium"
         ]}
       >
-        <Icon name={tab.icon} size={20} />
-        <span class="tab-title">{tab.title}</span>
+        <Icon name={tab.icon} size={20} class="expandable-tab-icon"/>
+        <span class="tab-title ml-2">{tab.title}</span>
       </a>
     );
   })}
