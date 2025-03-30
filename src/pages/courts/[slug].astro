@@ -1,0 +1,747 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import clientPromise from '../../lib/mongodb';
+import { enrichCourtData } from '../../lib/enrichCourt';
+import { ObjectId } from 'mongodb';
+import { BSONError } from 'bson';
+
+const { slug } = Astro.params;
+console.log('🎾 Loading court details for slug:', slug);
+
+// Connect to MongoDB
+const client = await clientPromise;
+const db = client.db('google_maps_data');
+
+// Try to find existing court
+let court;
+try {
+  // First try to find by ObjectId if the slug is a valid ObjectId
+  if (ObjectId.isValid(slug)) {
+    court = await db.collection('pickleball_courts').findOne({
+      _id: new ObjectId(slug)
+    });
+  }
+  
+  // If not found by ObjectId, try to find by title
+  if (!court) {
+    court = await db.collection('pickleball_courts').findOne({
+      title: { 
+        $regex: new RegExp(slug.replace(/-/g, ' '), 'i') 
+      } 
+    });
+  }
+} catch (error) {
+  console.error('❌ Error finding court:', error);
+    }
+
+// If court doesn't exist, try to generate it
+if (!court) {
+  console.log('🔄 Court not found, attempting to generate from slug...');
+  const courtTitle = slug.replace(/-/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  // Generate court data using Tavily
+  const enrichedData = await enrichCourtData(
+    new ObjectId().toString(), // Generate a new ObjectId
+    courtTitle,
+    '' // No address yet
+  );
+
+  if (enrichedData) {
+    console.log('✨ Generated new court data from Tavily');
+    
+    // Create new court document
+    const newId = new ObjectId();
+    court = {
+      _id: newId,
+      title: courtTitle,
+      description: enrichedData.description,
+      images: enrichedData.images || [],
+      socialLinks: enrichedData.socialLinks || [],
+      lastUpdated: new Date(),
+      // Default values for required fields
+      totalScore: 4.0,
+      reviewsCount: 0,
+      categories: ['Pickleball Court']
+    };
+
+    try {
+      // Insert the new court into MongoDB
+      await db.collection('pickleball_courts').insertOne(court);
+      console.log('💾 Saved new court data to MongoDB');
+    } catch (error) {
+      console.error('❌ Failed to save court to MongoDB:', error);
+    }
+  } else {
+    console.log('❌ Failed to generate court data');
+  return new Response(null, {
+    status: 404,
+    statusText: 'Court not found'
+  });
+}
+}
+
+console.log('✅ Found court:', {
+  id: court._id,
+  title: court.title,
+  hasDescription: !!court.description,
+  hasImages: !!court.images?.length
+});
+
+// If no description exists, fetch from Tavily
+if (!court.description) {
+  console.log('🔄 No description found, fetching from Tavily...', {
+    courtId: court._id.toString(),
+    courtName: court.title,
+    hasAddress: !!court.address
+  });
+
+  const enrichedData = await enrichCourtData(
+    court._id.toString(), 
+    court.title,
+    court.address
+  );
+
+  if (enrichedData) {
+    console.log('📝 Enriched data received:', {
+      courtId: court._id.toString(),
+      hasDescription: !!enrichedData.description,
+      descriptionLength: enrichedData.description?.length || 0,
+      imagesCount: enrichedData.images?.length || 0,
+      socialLinksCount: enrichedData.socialLinks?.length || 0
+    });
+    
+    // Update the court object with enriched data
+    court.description = enrichedData.description;
+    court.images = enrichedData.images;
+    court.socialLinks = enrichedData.socialLinks;
+    
+    console.log('✨ Court data updated with enriched content');
+  } else {
+    console.warn('⚠️ Failed to get enriched data for court:', {
+      courtId: court._id.toString(),
+      courtName: court.title
+    });
+  }
+}
+
+// Helper function to format description
+function formatDescription(rawDescription: string) {
+  // Split into paragraphs
+  const paragraphs = rawDescription.split('\n\n').filter(p => p.trim());
+  
+  // Remove common spam/unwanted content
+  const unwantedPhrases = [
+    'SUBSCRIBE NOW TO STAY UPDATED',
+    'QUICK LINKS',
+    'GET THE',
+    'SOLD OUT',
+    '[...]',
+    'PREFERRED COURT FEES'
+  ];
+  
+  // Clean paragraphs
+  const cleanParagraphs = paragraphs
+    .map(p => p.trim())
+    .filter(p => {
+      // Remove unwanted phrases
+      const containsUnwanted = unwantedPhrases.some(phrase => 
+        p.toUpperCase().includes(phrase)
+      );
+      // Remove pricing info
+      const containsPricing = p.includes('$') || /\d+\.\d+/.test(p);
+      // Remove very short lines that are likely headers
+      const isTooShort = p.length < 20 && p.toUpperCase() === p;
+      
+      return !containsUnwanted && !containsPricing && !isTooShort;
+    })
+    .map(p => {
+      // Clean up extra whitespace and newlines
+      return p.replace(/\s+/g, ' ').trim();
+    });
+
+  // Get unique paragraphs (remove duplicates)
+  const uniqueParagraphs = [...new Set(cleanParagraphs)];
+  
+  // Get the first paragraph as short description
+  const shortDesc = uniqueParagraphs[0] || '';
+  
+  // Get remaining paragraphs as full description
+  const fullDesc = uniqueParagraphs.slice(1).join('\n\n');
+  
+  return { shortDesc, fullDesc };
+}
+
+// Transform data with null checks
+const courtData = {
+  title: court.title,
+  imageUrl: court.imageUrl || '/images/default-court.jpg',
+  images: court.images || [],
+  description: court.description ? formatDescription(court.description) : null,
+  address: court.address,
+  state: court.state,
+  country: court.countryCode === 'IN' ? 'India' : 'United States',
+  coordinates: court.location || null,
+  phone: court.phone || null,
+  rating: court.totalScore || 4.0,
+  reviewsCount: court.reviewsCount || 0,
+  openingHours: court.openingHours || [],
+  socialLinks: court.socialLinks || [],
+  amenities: Object.entries(court.additionalInfo?.Amenities?.[0] || {})
+    .filter(([_, value]) => value === true)
+    .map(([key]) => key),
+  crowd: Object.entries(court.additionalInfo?.Crowd?.[0] || {})
+    .filter(([_, value]) => value === true)
+    .map(([key]) => key),
+  payments: Object.entries(court.additionalInfo?.Payments?.[0] || {})
+    .filter(([_, value]) => value === true)
+    .map(([key]) => key),
+  parking: Object.entries(court.additionalInfo?.Parking?.[0] || {})
+    .filter(([_, value]) => value === true)
+    .map(([key]) => key),
+  categories: court.categories || ['Pickleball Court'],
+  url: court.url
+};
+
+console.log('🏁 Final court data:', {
+  hasDescription: !!courtData.description,
+  imagesCount: courtData.images.length,
+  amenitiesCount: courtData.amenities.length,
+  hasPhone: !!courtData.phone,
+  hasSocialLinks: !!courtData.socialLinks.length
+});
+---
+
+<Layout title={courtData.title}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Hero Section with Image Carousel -->
+    <div class="relative h-[300px] md:h-[400px] lg:h-[500px] rounded-2xl overflow-hidden mb-8 shadow-2xl">
+      <div class="carousel-container relative w-full h-full">
+        {(courtData.images.length > 0 ? courtData.images : [courtData.imageUrl]).map((image, idx) => (
+          <div class={`carousel-slide absolute inset-0 transition-all duration-700 ease-in-out transform 
+                       ${idx === 0 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'}`}
+               data-index={idx}>
+            <img 
+              src={image} 
+              alt={`${courtData.title} - Image ${idx + 1}`}
+              class="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
+              loading={idx === 0 ? 'eager' : 'lazy'}
+              onerror="this.style.display='none'"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 
+                        hover:opacity-100 transition-opacity duration-300"></div>
+          </div>
+        ))}
+        
+        {courtData.images.length > 1 && (
+          <>
+            <div class="absolute inset-y-0 left-0 flex items-center">
+              <button class="carousel-prev hidden group-hover:flex items-center justify-center w-12 h-12 ml-4 
+                           bg-black/50 hover:bg-black/70 text-white rounded-full transform transition-all duration-300 
+                           hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                <span class="sr-only">Previous</span>
+                <svg class="w-6 h-6 transition-transform duration-300 group-hover:-translate-x-1" 
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            </div>
+            <div class="absolute inset-y-0 right-0 flex items-center">
+              <button class="carousel-next hidden group-hover:flex items-center justify-center w-12 h-12 mr-4 
+                           bg-black/50 hover:bg-black/70 text-white rounded-full transform transition-all duration-300 
+                           hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                <span class="sr-only">Next</span>
+                <svg class="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" 
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {courtData.images.map((_, idx) => (
+                <button class="carousel-dot w-2.5 h-2.5 rounded-full transition-all duration-500 ease-out transform
+                              hover:scale-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 "
+                        data-index={idx}
+                        aria-label={`Go to image ${idx + 1}`}
+                        style={`opacity: ${idx === 0 ? '1' : '100'}; 
+                                background-color: white; 
+                                transform: scale(${idx === 0 ? '1.25' : '1'})`}>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
+        <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 transform translate-y-0 transition-transform 
+                    duration-500 hover:translate-y-[-8px]">
+          <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">{courtData.title}</h1>
+          <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center bg-black/30 backdrop-blur-sm rounded-lg px-3 py-1.5 transform 
+                        transition-all duration-300 hover:bg-black/50">
+              {[1, 2, 3, 4, 5].map(star => (
+                <svg 
+                  class={`h-5 w-5 ${star <= Math.round(courtData.rating) ? 'text-yellow-400' : 'text-gray-400'}
+                          transition-all duration-300 hover:scale-125`} 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+              <span class="ml-2 text-white font-medium">
+                {courtData.rating.toFixed(1)} ({courtData.reviewsCount} reviews)
+              </span>
+            </div>
+            <span class="text-white/90 text-sm md:text-base flex items-center bg-black/30 backdrop-blur-sm 
+                       rounded-lg px-3 py-1.5 transform transition-all duration-300 hover:bg-black/50">
+              <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              </svg>
+              {courtData.address}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid lg:grid-cols-3 gap-8">
+      <!-- Left Column -->
+      <div class="lg:col-span-2 space-y-8">
+        {courtData.description && (
+          <div class="bg-white rounded-xl shadow-sm p-6 transform transition-all duration-500 hover:shadow-lg 
+                     hover:translate-y-[-4px]">
+            <h2 class="text-xl font-bold mb-4 text-black">About</h2>
+            <div class="prose prose-sm max-w-none text-gray-600">
+              <p class="mb-4 leading-relaxed">{courtData.description.shortDesc}</p>
+              
+              {courtData.description.fullDesc && (
+                <div class="relative">
+                  <div class="description-content transition-all duration-700 ease-in-out overflow-hidden"
+                       style="max-height: 0;">
+                    {courtData.description.fullDesc.split('\n\n').map((paragraph) => (
+                      <p class="mb-4 last:mb-0 leading-relaxed animate-fadeIn">{paragraph}</p>
+                    ))}
+                  </div>
+                  
+                  <button
+                    class="read-more-btn mt-2 text-pink-600 hover:text-pink-800 transition-all duration-300 
+                           flex items-center gap-1 group hover:gap-2"
+                    onclick="toggleDescription(this)"
+                  >
+                    <span>Read more</span>
+                    <svg 
+                      class="w-4 h-4 transform transition-all duration-300 group-hover:translate-y-0.5" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {courtData.categories.length > 0 && (
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4 text-black">Categories</h2>
+            <div class="flex flex-wrap gap-2">
+              {courtData.categories.map(category => (
+                <span class="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm">
+                  {category}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(courtData.amenities.length > 0 || courtData.parking.length > 0) && (
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4 text-black">Facilities</h2>
+            <div class="grid sm:grid-cols-2 gap-6">
+              {courtData.amenities.length > 0 && (
+                <div>
+                  <h3 class="font-medium text-gray-900 mb-3">Amenities</h3>
+                  <ul class="space-y-2">
+                    {courtData.amenities.map(amenity => (
+                      <li class="flex items-center text-gray-600">
+                        <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {amenity}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {courtData.parking.length > 0 && (
+                <div>
+                  <h3 class="font-medium text-gray-900 mb-3">Parking</h3>
+                  <ul class="space-y-2">
+                    {courtData.parking.map(option => (
+                      <li class="flex items-center text-gray-600">
+                        <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {option}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {courtData.crowd?.length > 0 && (
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4 text-black">Crowd & Atmosphere</h2>
+            <div class="flex flex-wrap gap-2">
+              {courtData.crowd.map(feature => (
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                  {feature}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <!-- Right Column -->
+      <div class="space-y-6">
+        <!-- Contact Card -->
+        <div class="bg-white rounded-xl shadow-sm p-6 transform transition-all duration-500 hover:shadow-lg 
+                    hover:translate-y-[-4px]">
+          <h2 class="text-xl font-bold mb-4 text-black">Contact & Links</h2>
+          {courtData.phone && (
+            <div class="flex items-center mb-4">
+              <svg class="h-5 w-5 text-gray-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <a href={`tel:${courtData.phone}`} class="text-pink-600 hover:text-pink-800 transition-colors">
+                {courtData.phone}
+              </a>
+            </div>
+          )}
+
+          {courtData.socialLinks?.length > 0 && (
+            <div class="flex flex-col gap-3 mb-4">
+              {courtData.socialLinks.map(link => (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center text-gray-600 hover:text-gray-900 transition-colors group"
+                >
+                  {link.platform === 'Instagram' && (
+                    <svg class="h-5 w-5 mr-3 text-pink-500 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                  )}
+                  {link.platform === 'Facebook' && (
+                    <svg class="h-5 w-5 mr-3 text-blue-600 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  )}
+                  {link.platform === 'Twitter' && (
+                    <svg class="h-5 w-5 mr-3 text-blue-400 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                    </svg>
+                  )}
+                  {link.platform === 'YouTube' && (
+                    <svg class="h-5 w-5 mr-3 text-red-600 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  )}
+                  {link.platform === 'Website' && (
+                    <svg class="h-5 w-5 mr-3 text-gray-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                    </svg>
+                  )}
+                  <span class="group-hover:underline">{link.platform}</span>
+                </a>
+              ))}
+            </div>
+          )}
+
+          <div class="flex flex-col gap-3">
+            <a
+              href={courtData.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 transition-colors"
+            >
+              Get Directions
+              <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Hours Card -->
+        {courtData.openingHours.length > 0 && (
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4 text-black">Opening Hours</h2>
+            <ul class="space-y-3">
+              {courtData.openingHours.map(({day, hours}) => (
+                <li class="flex justify-between items-center">
+                  <span class="text-gray-600">{day}</span>
+                  <span class="font-medium text-gray-900">{hours}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <!-- Payments Section -->
+        {courtData.payments?.length > 0 && (
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4 text-black">Accepted Payments</h2>
+            <div class="flex flex-wrap gap-2">
+              {courtData.payments.map(payment => (
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                  {payment}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  function initCarousel() {
+    const container = document.querySelector('.carousel-container');
+    if (!container) return;
+
+    const slides = container.querySelectorAll('.carousel-slide');
+    const dots = container.querySelectorAll('.carousel-dot');
+    const prevBtn = container.querySelector('.carousel-prev');
+    const nextBtn = container.querySelector('.carousel-next');
+    let currentIndex = 0;
+    let interval: number | null = null;
+
+    function updateDots(index: number) {
+      dots?.forEach((dot: HTMLElement, i: number) => {
+        // Update opacity
+        dot.style.opacity = i === index ? '1' : '0.5';
+        // Update scale
+        dot.style.transform = i === index ? 'scale(1.25)' : 'scale(1)';
+      });
+    }
+
+    function showSlide(index: number, direction: 'next' | 'prev' = 'next') {
+      const currentSlide = slides[currentIndex] as HTMLElement;
+      const nextSlide = slides[index] as HTMLElement;
+      
+      // Reset all slides
+      slides.forEach((slide: Element) => {
+        const el = slide as HTMLElement;
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(100%)';
+      });
+
+      // Animate current slide out
+      currentSlide.style.opacity = '0';
+      currentSlide.style.transform = direction === 'next' ? 'translateX(-100%)' : 'translateX(100%)';
+
+      // Animate new slide in
+      nextSlide.style.opacity = '1';
+      nextSlide.style.transform = 'translateX(0)';
+
+      // Update dots
+      updateDots(index);
+
+      currentIndex = index;
+    }
+
+    function nextSlide() {
+      const nextIndex = (currentIndex + 1) % slides.length;
+      showSlide(nextIndex, 'next');
+    }
+
+    function prevSlide() {
+      const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+      showSlide(prevIndex, 'prev');
+    }
+
+    function startAutoplay() {
+      if (slides.length > 1) {
+        interval = window.setInterval(nextSlide, 5000);
+      }
+    }
+
+    function stopAutoplay() {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    }
+
+    // Event listeners
+    container.addEventListener('mouseenter', () => {
+      prevBtn.classList.remove('hidden');
+      nextBtn.classList.remove('hidden');
+      prevBtn.classList.add('flex');
+      nextBtn.classList.add('flex');
+      stopAutoplay();
+    });
+
+    container.addEventListener('mouseleave', () => {
+      prevBtn.classList.add('hidden');
+      nextBtn.classList.add('hidden');
+      prevBtn.classList.remove('flex');
+      nextBtn.classList.remove('flex');
+      startAutoplay();
+    });
+
+    prevBtn?.addEventListener('click', () => {
+      prevSlide();
+      stopAutoplay();
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      nextSlide();
+      stopAutoplay();
+    });
+
+    // Event listeners for dots with improved feedback
+    dots?.forEach((dot: Element, index: number) => {
+      dot.addEventListener('click', () => {
+        const direction = index > currentIndex ? 'next' : 'prev';
+        showSlide(index, direction);
+        stopAutoplay();
+      });
+
+      // Add hover effect
+      dot.addEventListener('mouseenter', () => {
+        (dot as HTMLElement).style.transform = 'scale(1.5)';
+      });
+
+      dot.addEventListener('mouseleave', () => {
+        (dot as HTMLElement).style.transform = index === currentIndex ? 'scale(1.25)' : 'scale(1)';
+      });
+    });
+
+    // Handle visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopAutoplay();
+      } else {
+        startAutoplay();
+      }
+    });
+
+    // Start autoplay
+    startAutoplay();
+  }
+
+  function toggleDescription(btn) {
+    const content = btn.previousElementSibling;
+    const span = btn.querySelector('span');
+    const svg = btn.querySelector('svg');
+    
+    if (content.style.maxHeight === '0px') {
+      content.style.maxHeight = content.scrollHeight + 'px';
+      span.textContent = 'Read less';
+      svg.style.transform = 'rotate(180deg)';
+      
+      // Animate paragraphs
+      content.querySelectorAll('p').forEach((p, i) => {
+        p.style.opacity = '0';
+        p.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          p.style.opacity = '1';
+          p.style.transform = 'translateY(0)';
+        }, i * 100);
+      });
+    } else {
+      content.style.maxHeight = '0px';
+      span.textContent = 'Read more';
+      svg.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  // Initialize description heights
+  document.addEventListener('DOMContentLoaded', () => {
+    initCarousel();
+    
+    const contents = document.querySelectorAll('.description-content');
+    contents.forEach(content => {
+      (content as HTMLElement).style.maxHeight = '0px';
+    });
+  });
+</script>
+
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .description-content {
+    max-height: 0;
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .description-content p {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Smooth hover transitions */
+  .transition-all {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Card hover effects */
+  .hover\:shadow-lg:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Carousel improvements */
+  .carousel-slide {
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+
+  .carousel-container {
+    perspective: 1000px;
+  }
+
+  /* Better focus styles */
+  button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.5);
+  }
+
+  /* Improved dot transitions */
+  .carousel-dot {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+  }
+
+  .carousel-dot:hover {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+</style>
