@@ -6,7 +6,7 @@ import { enrichCourtData } from '../../lib/enrichCourt';
 // Constants
 const ITEMS_PER_PAGE = 9;
 
-// Connect to MongoDB
+
 const client = await clientPromise;
 const db = client.db('google_maps_data');
 
@@ -113,7 +113,7 @@ const initialData = {
     </div>
 
     <!-- Search and Filter Controls -->
-    <div class="mb-8 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 backdrop-blur-sm">
+    <div class="mb-8 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 backdrop-blur-sm relative z-[999]">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1">
           <div class="relative group">
@@ -121,11 +121,16 @@ const initialData = {
               type="text" 
               id="searchInput"
               placeholder="Search by court name..."
-              class="w-full p-4 pl-12 border border-gray-200 bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 group-hover:border-pink-300"
+              class="w-full p-4 pl-12 border border-gray-200 bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 group-hover:border-pink-300 text-gray-900"
+              autocomplete="off"
             />
             <svg class="absolute left-4 top-4 h-5 w-5 text-gray-400 group-hover:text-pink-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
             </svg>
+            <!-- Suggestions Dropdown -->
+            <div id="searchSuggestions" class="hidden absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden max-h-[300px] overflow-y-auto backdrop-blur-sm">
+              <!-- Suggestions will be inserted here -->
+            </div>
           </div>
         </div>
 
@@ -362,6 +367,94 @@ const initialData = {
   let currentTotalPages = initialData.totalPages;
   let isLoading = false;
 
+  let typingTimer;
+  const doneTypingInterval = 300; // Wait for 300ms after user stops typing
+
+  // Fetch suggestions for search
+  async function fetchSuggestions(searchTerm) {
+    if (!searchTerm) return [];
+    
+    try {
+      const response = await fetch(`/api/courts?search=${searchTerm}&limit=3`);
+      if (!response.ok) throw new Error('Failed to fetch suggestions');
+      const data = await response.json();
+      return data.courts;
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      return [];
+    }
+  }
+
+  // Display suggestions dropdown
+  function displaySuggestions(suggestions) {
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    if (!suggestionsContainer) return;
+
+    if (!suggestions.length) {
+      suggestionsContainer.classList.add('hidden');
+      return;
+    }
+
+    suggestionsContainer.innerHTML = suggestions.map(court => `
+      <a
+        href="/courts/${court.slug}"
+        class="block px-4 py-3 hover:bg-gray-50 flex items-start gap-3 transition-colors duration-200"
+      >
+        <img 
+          src="${court.imageUrl}" 
+          alt="${court.title}"
+          class="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+        />
+        <div class="flex-1 min-w-0">
+          <div class="font-medium text-gray-900 truncate">${court.title}</div>
+          <div class="text-sm text-gray-500 truncate">${court.address}</div>
+        </div>
+      </a>
+    `).join('');
+
+    suggestionsContainer.classList.remove('hidden');
+  }
+
+  // Handle search input
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      e.preventDefault(); // Prevent form submission
+      clearTimeout(typingTimer);
+      
+      const searchTerm = e.target.value.trim();
+      
+      // Hide suggestions if search term is empty
+      if (!searchTerm) {
+        const suggestionsContainer = document.getElementById('searchSuggestions');
+        if (suggestionsContainer) {
+          suggestionsContainer.classList.add('hidden');
+        }
+        return;
+      }
+
+      // Wait for user to stop typing before fetching suggestions
+      typingTimer = setTimeout(async () => {
+        const suggestions = await fetchSuggestions(searchTerm);
+        displaySuggestions(suggestions);
+      }, doneTypingInterval);
+    });
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      const suggestionsContainer = document.getElementById('searchSuggestions');
+      if (!searchInput.contains(e.target) && !suggestionsContainer?.contains(e.target)) {
+        suggestionsContainer?.classList.add('hidden');
+      }
+    });
+
+    // Prevent form submission on enter
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
+    });
+  }
+
   // Show/hide loading overlay
   function showLoading() {
     console.log('⌛ Showing loading overlay');
@@ -390,15 +483,22 @@ const initialData = {
     try {
       // Only include non-empty and non-'all' filters
       const queryParams = new URLSearchParams();
-      queryParams.append('page', page.toString());
       
+      // Only add page if it's not the first page
+      if (page > 1) {
+        queryParams.append('page', page.toString());
+      }
+      
+      // Only add filters that have meaningful values
       Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== 'all') {
+        if (value && value !== 'all' && value !== 'undefined' && value.trim() !== '') {
           queryParams.append(key, value);
         }
       });
 
-      const url = `/api/courts?${queryParams}`;
+      // Only add the query string if we have parameters
+      const queryString = queryParams.toString();
+      const url = `/api/courts${queryString ? `?${queryString}` : ''}`;
       console.log('🌐 Fetching from URL:', url);
 
       const response = await fetch(url);
@@ -418,53 +518,56 @@ const initialData = {
     }
   }
 
-  // Filter function
+  // Update filterCourts function to only include meaningful filters
+  let filterTimer;
+  const filterDebounceInterval = 500; // Wait for 500ms after user stops typing
+
   async function filterCourts() {
-    const selectedState = stateFilter?.value;
-    const selectedCountry = countryFilter?.value;
-    const searchTerm = searchInput?.value?.trim() || '';
+    clearTimeout(filterTimer);
 
-    console.log('🔍 Filtering courts with:', {
-      state: selectedState,
-      country: selectedCountry,
-      search: searchTerm
-    });
+    filterTimer = setTimeout(async () => {
+      const selectedState = stateFilter?.value;
+      const selectedCountry = countryFilter?.value;
 
-    const filters = {};
-    if (selectedState && selectedState !== 'all') {
-      filters.state = selectedState;
-    }
-    if (selectedCountry && selectedCountry !== 'all') {
-      filters.country = selectedCountry;
-    }
-    if (searchTerm) {
-      filters.search = searchTerm;
-    }
+      console.log('🔍 Filtering courts with:', {
+        state: selectedState,
+        country: selectedCountry
+      });
 
-    currentPage = 1;
-    const data = await fetchCourtsForPage(currentPage, filters);
-    
-    filteredCourts = data.courts;
-    currentTotalPages = data.totalPages;
-    
-    console.log('📊 Filtered results:', {
-      courtsCount: filteredCourts.length,
-      totalPages: currentTotalPages
-    });
+      const filters = {};
+      // Only add filters if they're not 'all'
+      if (selectedState && selectedState !== 'all') {
+        filters.state = selectedState;
+      }
+      if (selectedCountry && selectedCountry !== 'all') {
+        filters.country = selectedCountry;
+      }
 
-    if (visibleCount) {
-      visibleCount.textContent = data.courts.length.toString();
-    }
-    if (totalCountElem) {
-      totalCountElem.textContent = data.totalCourts.toString();
-    }
+      currentPage = 1; // Reset to first page when filtering
+      const data = await fetchCourtsForPage(currentPage, filters);
+      
+      filteredCourts = data.courts;
+      currentTotalPages = data.totalPages;
+      
+      console.log('📊 Filtered results:', {
+        courtsCount: filteredCourts.length,
+        totalPages: currentTotalPages
+      });
 
-    if (noResults) {
-      noResults.style.display = data.courts.length === 0 ? 'block' : 'none';
-    }
+      if (visibleCount) {
+        visibleCount.textContent = data.courts.length.toString();
+      }
+      if (totalCountElem) {
+        totalCountElem.textContent = data.totalCourts.toString();
+      }
 
-    displayCurrentPage();
-    updatePagination();
+      if (noResults) {
+        noResults.style.display = data.courts.length === 0 ? 'block' : 'none';
+      }
+
+      displayCurrentPage();
+      updatePagination();
+    }, filterDebounceInterval);
   }
 
   // Pagination functions
@@ -592,16 +695,12 @@ const initialData = {
     const filters = {};
     const selectedState = stateFilter?.value;
     const selectedCountry = countryFilter?.value;
-    const searchTerm = searchInput?.value?.trim() || '';
 
     if (selectedState && selectedState !== 'all') {
       filters.state = selectedState;
     }
     if (selectedCountry && selectedCountry !== 'all') {
       filters.country = selectedCountry;
-    }
-    if (searchTerm) {
-      filters.search = searchTerm;
     }
 
     const data = await fetchCourtsForPage(currentPage, filters);
@@ -680,12 +779,15 @@ const initialData = {
   // Event listeners
   stateFilter?.addEventListener('change', filterCourts);
   countryFilter?.addEventListener('change', filterCourts);
-  searchInput?.addEventListener('input', filterCourts);
   
   resetButton?.addEventListener('click', () => {
     if (stateFilter) stateFilter.value = 'all';
     if (countryFilter) countryFilter.value = 'all';
     if (searchInput) searchInput.value = '';
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    if (suggestionsContainer) {
+      suggestionsContainer.classList.add('hidden');
+    }
     currentPage = 1;
     filterCourts();
   });
@@ -762,5 +864,37 @@ const initialData = {
   
   #loadingOverlay.opacity-0 {
     opacity: 0;
+  }
+
+  /* Update these styles */
+  .relative {
+    position: relative;
+    isolation: isolate;
+  }
+
+  #searchSuggestions {
+    position: absolute;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+  }
+
+  #searchSuggestions a {
+    position: relative;
+    z-index: 9999;
+  }
+
+  #searchSuggestions a:not(:last-child) {
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  }
+
+  #searchSuggestions a:hover {
+    background-color: rgba(249, 250, 251, 0.8);
+  }
+
+  /* Add new style for the search container */
+  .search-container {
+    position: relative;
+    z-index: 999;
   }
 </style>
