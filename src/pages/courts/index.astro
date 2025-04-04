@@ -7,7 +7,7 @@ import { TypewriterText } from '../../components/ui/typewriter-text';
 
 // Constants
 const ITEMS_PER_PAGE = 9;
-
+const GOOGLE_MAPS_API_KEY = import.meta.env.GOOGLE_MAPS_API_KEY;
 
 const client = await clientPromise;
 const db = client.db('google_maps_data');
@@ -90,7 +90,8 @@ const initialData = {
   courts: courtsData,
   totalCourts,
   totalPages,
-  currentPage: initialPage
+  currentPage: initialPage,
+  googleMapsApiKey: GOOGLE_MAPS_API_KEY
 };
 ---
 
@@ -373,7 +374,7 @@ const initialData = {
   </div>
 </Layout>
 
-<script define:vars={{ initialData, ITEMS_PER_PAGE }}>
+<script define:vars={{ initialData, ITEMS_PER_PAGE, googleMapsApiKey: GOOGLE_MAPS_API_KEY }}>
   console.log('🚀 Initializing courts page with data:', initialData);
 
   // Constants and DOM elements
@@ -390,6 +391,10 @@ const initialData = {
   const nextPageBtn = document.getElementById('nextPage');
   const pageNumbers = document.getElementById('pageNumbers');
   const currentPageDisplay = document.getElementById('currentPageDisplay');
+  const nearMeButton = document.getElementById('nearMeButton');
+  const dynamicTitle = document.getElementById('dynamicTitle');
+  const locationTitle = document.getElementById('locationTitle');
+  const locationName = document.getElementById('locationName');
 
   console.log('📌 DOM elements loaded:', {
     hasLoadingOverlay: !!loadingOverlay,
@@ -404,7 +409,11 @@ const initialData = {
     hasPrevBtn: !!prevPageBtn,
     hasNextBtn: !!nextPageBtn,
     hasPageNumbers: !!pageNumbers,
-    hasCurrentPageDisplay: !!currentPageDisplay
+    hasCurrentPageDisplay: !!currentPageDisplay,
+    hasNearMeButton: !!nearMeButton,
+    hasDynamicTitle: !!dynamicTitle,
+    hasLocationTitle: !!locationTitle,
+    hasLocationName: !!locationName
   });
 
   let currentPage = initialData.currentPage;
@@ -728,7 +737,7 @@ const initialData = {
                 href="${court.url}"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700"
+                class="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg transition-all duration-300 hover:bg-pink-700 hover:shadow-lg active:transform active:scale-95"
               >
                 Directions
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -869,6 +878,197 @@ const initialData = {
     filterCourts();
   });
 
+  // Near Me functionality
+  if (nearMeButton) {
+    nearMeButton.addEventListener('click', async () => {
+      try {
+        showLoading();
+        
+        // First check if geolocation is supported
+        if (!navigator.geolocation) {
+          throw new Error('Your device or browser does not support location services. Please try on a device with GPS or use the search filters instead.');
+        }
+
+        // Check if we're on HTTPS or a local connection
+        const isLocalhost = location.hostname === 'localhost' || 
+                          location.hostname === '127.0.0.1' || 
+                          location.hostname.startsWith('192.168.') || 
+                          location.hostname.startsWith('10.') ||
+                          location.hostname.startsWith('172.');
+
+        if (location.protocol !== 'https:' && !isLocalhost) {
+          throw new Error('For security reasons, location services require a secure HTTPS connection. Please access this site via HTTPS.');
+        }
+
+        // Check current permission state
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        console.log('Current permission state:', permissionStatus.state);
+
+        if (permissionStatus.state === 'denied') {
+          throw new Error(`Location access is blocked. Please follow these steps to enable it:
+1. Click the site settings icon (🔒) in your browser's address bar
+2. Find "Location" in the permissions list
+3. Change the setting to "Allow"
+4. Refresh the page and try again`);
+        }
+
+        // If permission is prompt or granted, request location
+        const position = await new Promise((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Location request timed out. Please check your connection and try again.'));
+          }, 30000); // 30 second timeout
+
+          // Watch for permission changes
+          permissionStatus.addEventListener('change', () => {
+            console.log('Permission state changed to:', permissionStatus.state);
+            if (permissionStatus.state === 'denied') {
+              clearTimeout(timeoutId);
+              reject(new Error('Location access was denied. Please enable it in your browser settings and try again.'));
+            }
+          });
+
+          // Request position with browser's native dialog
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              clearTimeout(timeoutId);
+              resolve(pos);
+            },
+            (error) => {
+              clearTimeout(timeoutId);
+              switch(error.code) {
+                case error.PERMISSION_DENIED:
+                  reject(new Error(`Location access was denied. Please follow these steps:
+1. Click the site settings icon (🔒) in your browser's address bar
+2. Find "Location" in the permissions list
+3. Change the setting to "Allow"
+4. Refresh the page and try again`));
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  reject(new Error(`Unable to detect your location. Please try:
+1. Enabling GPS if you're on mobile
+2. Checking your device's location services
+3. Using a device with GPS capabilities
+4. Using the search filters instead`));
+                  break;
+                case error.TIMEOUT:
+                  reject(new Error('Location request timed out. Please check your internet connection and try again.'));
+                  break;
+                default:
+                  reject(new Error(`Location error: ${error.message}`));
+              }
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 30000,
+              maximumAge: 0
+            }
+          );
+        });
+
+        const coords = position.coords;
+        const { latitude, longitude } = coords;
+        console.log('📍 Your coordinates:', { latitude, longitude });
+
+        // Get location name using reverse geocoding
+        try {
+          const geocodeResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleMapsApiKey}`);
+          const geocodeData = await geocodeResponse.json();
+          
+          if (geocodeData.results && geocodeData.results.length > 0) {
+            const locationDetails = geocodeData.results[0];
+            console.log('📍 Location details:', locationDetails);
+            
+            // Find city and state from address components
+            let city = '';
+            let state = '';
+            let country = '';
+            
+            locationDetails.address_components.forEach((component) => {
+              if (component.types.includes('locality')) {
+                city = component.long_name;
+              } else if (component.types.includes('administrative_area_level_1')) {
+                state = component.long_name;
+              } else if (component.types.includes('country')) {
+                country = component.long_name;
+              }
+            });
+
+            const locationText = [city, state, country].filter(Boolean).join(', ');
+            console.log('📍 Formatted location:', locationText);
+
+            // Update UI with location
+            if (dynamicTitle) dynamicTitle.classList.add('hidden');
+            if (locationTitle) locationTitle.classList.remove('hidden');
+            if (locationName) {
+              locationName.textContent = locationText || `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            }
+          } else {
+            // If no results from geocoding, show coordinates
+            if (locationName) {
+              locationName.textContent = `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            }
+          }
+        } catch (error) {
+          console.error('Error getting location name:', error);
+          // Fallback to showing coordinates
+          if (locationName) {
+            locationName.textContent = `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          }
+        }
+
+        // Update UI to show loading state
+        if (dynamicTitle) dynamicTitle.classList.add('hidden');
+        if (locationTitle) locationTitle.classList.remove('hidden');
+        if (locationName) locationName.textContent = 'Finding nearby courts...';
+
+        // Fetch nearby courts
+        const response = await fetch(`/api/courts?lat=${latitude}&lng=${longitude}`);
+        if (!response.ok) throw new Error('Failed to fetch nearby courts');
+        
+        const data = await response.json();
+        filteredCourts = data.courts;
+
+        // Update location name
+        if (locationName) {
+          locationName.textContent = 'Near Your Location';
+        }
+
+        // Update display
+        displayCurrentPage();
+        updatePagination();
+
+      } catch (error) {
+        console.error('Error getting location:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        
+        // Create a more user-friendly error dialog
+        const errorDialog = document.createElement('div');
+        errorDialog.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center';
+        errorDialog.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 max-w-md mx-4">
+            <div class="text-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">Location Access Error</h3>
+            </div>
+            <div class="text-gray-600 space-y-4">
+              <p>${errorMessage}</p>
+            </div>
+            <div class="mt-6 flex justify-end">
+              <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200" onclick="this.parentElement.parentElement.parentElement.remove()">
+                Close
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(errorDialog);
+      } finally {
+        hideLoading();
+      }
+    });
+  }
+
   // Initial setup
   window.addEventListener('DOMContentLoaded', () => {
     console.log('🎬 Page loaded, initializing...');
@@ -986,181 +1186,3 @@ const initialData = {
     }
   }
 </style>
-
-<script>
-  // Shared utility functions
-  function showLoading() {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'flex';
-      loadingOverlay.classList.remove('opacity-0');
-    }
-  }
-
-  function hideLoading() {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) {
-      loadingOverlay.classList.add('opacity-0');
-      setTimeout(() => {
-        loadingOverlay.style.display = 'none';
-      }, 300);
-    }
-  }
-
-  // Shared state
-  let filteredCourts = [];
-  function displayCurrentPage() {
-    const courtsGrid = document.getElementById('courtsGrid');
-    if (!courtsGrid) return;
-    // Rest of displayCurrentPage implementation...
-  }
-
-  // Near Me functionality
-  const nearMeButton = document.getElementById('nearMeButton');
-  const dynamicTitle = document.getElementById('dynamicTitle');
-  const locationTitle = document.getElementById('locationTitle');
-  const locationName = document.getElementById('locationName');
-
-  if (nearMeButton) {
-    nearMeButton.addEventListener('click', async () => {
-      try {
-        showLoading();
-        
-        // First check if geolocation is supported
-        if (!navigator.geolocation) {
-          throw new Error('Your device or browser does not support location services. Please try on a device with GPS or use the search filters instead.');
-        }
-
-        // Check if we're on HTTPS or a local connection
-        const isLocalhost = location.hostname === 'localhost' || 
-                          location.hostname === '127.0.0.1' || 
-                          location.hostname.startsWith('192.168.') || 
-                          location.hostname.startsWith('10.') ||
-                          location.hostname.startsWith('172.');
-
-        if (location.protocol !== 'https:' && !isLocalhost) {
-          throw new Error('For security reasons, location services require a secure HTTPS connection. Please access this site via HTTPS.');
-        }
-
-        // Check current permission state
-        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-        console.log('Current permission state:', permissionStatus.state);
-
-        if (permissionStatus.state === 'denied') {
-          throw new Error(`Location access is blocked. Please follow these steps to enable it:
-1. Click the site settings icon (🔒) in your browser's address bar
-2. Find "Location" in the permissions list
-3. Change the setting to "Allow"
-4. Refresh the page and try again`);
-        }
-
-        // If permission is prompt or granted, request location
-        const position = await new Promise((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            reject(new Error('Location request timed out. Please check your connection and try again.'));
-          }, 30000); // 30 second timeout
-
-          // Watch for permission changes
-          permissionStatus.addEventListener('change', () => {
-            console.log('Permission state changed to:', permissionStatus.state);
-            if (permissionStatus.state === 'denied') {
-              clearTimeout(timeoutId);
-              reject(new Error('Location access was denied. Please enable it in your browser settings and try again.'));
-            }
-          });
-
-          // Request position with browser's native dialog
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              clearTimeout(timeoutId);
-              resolve(pos);
-            },
-            (error) => {
-              clearTimeout(timeoutId);
-              switch(error.code) {
-                case error.PERMISSION_DENIED:
-                  reject(new Error(`Location access was denied. Please follow these steps:
-1. Click the site settings icon (🔒) in your browser's address bar
-2. Find "Location" in the permissions list
-3. Change the setting to "Allow"
-4. Refresh the page and try again`));
-                  break;
-                case error.POSITION_UNAVAILABLE:
-                  reject(new Error(`Unable to detect your location. Please try:
-1. Enabling GPS if you're on mobile
-2. Checking your device's location services
-3. Using a device with GPS capabilities
-4. Using the search filters instead`));
-                  break;
-                case error.TIMEOUT:
-                  reject(new Error('Location request timed out. Please check your internet connection and try again.'));
-                  break;
-                default:
-                  reject(new Error(`Location error: ${error.message}`));
-              }
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 30000,
-              maximumAge: 0
-            }
-          );
-        });
-
-        const coords = position.coords;
-        const { latitude, longitude } = coords;
-
-        // Update UI to show loading state
-        if (dynamicTitle) dynamicTitle.classList.add('hidden');
-        if (locationTitle) locationTitle.classList.remove('hidden');
-        if (locationName) locationName.textContent = 'Finding nearby courts...';
-
-        // Fetch nearby courts
-        const response = await fetch(`/api/courts?lat=${latitude}&lng=${longitude}`);
-        if (!response.ok) throw new Error('Failed to fetch nearby courts');
-        
-        const data = await response.json();
-        filteredCourts = data.courts;
-
-        // Update location name
-        if (locationName) {
-          locationName.textContent = 'Near Your Location';
-        }
-
-        // Update display if the function is available
-        if (typeof displayCurrentPage === 'function') {
-          displayCurrentPage();
-        }
-
-      } catch (error) {
-        console.error('Error getting location:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        
-        // Create a more user-friendly error dialog
-        const errorDialog = document.createElement('div');
-        errorDialog.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center';
-        errorDialog.innerHTML = `
-          <div class="bg-white rounded-2xl p-8 max-w-md mx-4">
-            <div class="text-center mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Location Access Error</h3>
-            </div>
-            <div class="text-gray-600 space-y-4">
-              <p>${errorMessage}</p>
-            </div>
-            <div class="mt-6 flex justify-end">
-              <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200" onclick="this.parentElement.parentElement.parentElement.remove()">
-                Close
-              </button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(errorDialog);
-      } finally {
-        hideLoading();
-      }
-    });
-  }
-</script>
