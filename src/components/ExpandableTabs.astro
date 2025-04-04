@@ -101,7 +101,7 @@ const {
     if (tab.title === "Blog") {
       const blogItems = categories.map(category => ({
         title: category.title,
-        href: `/generated-blog/${category.slug}`,
+        href: `/${category.slug}`,
         icon: category.icon || "lucide:file-text"
       }));
 

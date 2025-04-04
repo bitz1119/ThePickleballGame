@@ -238,7 +238,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Create blog post filename
     const slug = slugify(query.toLowerCase());
     const blogFileName = `${slug}.md`;
-    const blogDir = path.join(process.cwd(), "src/pages/generated-blog");
+    const blogDir = path.join(process.cwd(), "src/pages");
     const publicImagesDir = path.join(process.cwd(), "public/images/generated");
 
     // Ensure directories exist
