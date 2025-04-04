@@ -2,6 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import clientPromise from '../../lib/mongodb';
 import { enrichCourtData } from '../../lib/enrichCourt';
+import { Typewriter } from '../../components/ui/typewriter';
+import { TypewriterText } from '../../components/ui/typewriter-text';
 
 // Constants
 const ITEMS_PER_PAGE = 9;
@@ -135,6 +137,17 @@ const initialData = {
         </div>
 
         <div class="flex flex-col md:flex-row gap-3">
+          <button
+            id="nearMeButton"
+            class="px-6 py-4 bg-pink-50 text-pink-600 font-medium rounded-xl hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-200 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Near Me
+          </button>
+
           <select 
             id="stateFilter"
             class="w-full md:w-48 p-4 border border-gray-200 text-gray-700 md:text-base text-md bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 hover:border-pink-300"
@@ -163,6 +176,32 @@ const initialData = {
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Dynamic Title Section -->
+    <div id="dynamicTitle" class="mb-12 text-center h-16">
+      <div class="space-y-8">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+          <TypewriterText
+            client:load
+            text={["Start Your Game – Find a Court", "Where Do You Want to Play?", "Find the Perfect Court"]}
+            speed={70}
+            deleteSpeed={50}
+            delay={1500}
+            className="text-white"
+            loop={true}
+            cursor={true}
+          />
+        </h2>
+      </div>
+    </div>
+
+    <!-- Location-based Title -->
+    <div id="locationTitle" class="mb-12 text-center hidden">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold">
+        <span class="text-white">Courts in </span>
+        <span id="locationName" class="text-yellow-400"></span>
+      </h2>
     </div>
 
     <!-- Results Summary -->
@@ -897,4 +936,102 @@ const initialData = {
     position: relative;
     z-index: 999;
   }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 </style>
+
+<script>
+  import { findNearbyCourts } from '../../lib/places';
+
+  // Handle Near Me functionality
+  const nearMeButton = document.getElementById('nearMeButton');
+  const dynamicTitle = document.getElementById('dynamicTitle');
+  const locationTitle = document.getElementById('locationTitle');
+  const locationName = document.getElementById('locationName');
+
+  if (nearMeButton) {
+    nearMeButton.addEventListener('click', async () => {
+      try {
+        showLoading();
+        
+        // Request user's location
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+
+        const { latitude, longitude } = position.coords;
+
+        // Get location details
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.GOOGLE_MAPS_API_KEY}`
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch location details');
+        }
+
+        const data = await response.json();
+        
+        if (data.status !== 'OK') {
+          throw new Error('Geocoding API error');
+        }
+
+        // Extract city name
+        let cityName = '';
+        data.results[0].address_components.forEach((component: any) => {
+          if (component.types.includes('locality')) {
+            cityName = component.long_name;
+          }
+        });
+
+        // Update UI with location name
+        if (dynamicTitle && locationTitle && locationName) {
+          dynamicTitle.classList.add('hidden');
+          locationTitle.classList.remove('hidden');
+          locationName.textContent = cityName;
+          
+          // Add typewriter effect
+          const typewriter = new Typewriter({
+            text: cityName,
+            speed: 70,
+            className: "text-yellow-400",
+            cursorChar: "_"
+          });
+          
+          locationName.innerHTML = '';
+          locationName.appendChild(typewriter);
+        }
+
+        // Fetch nearby courts
+        const nearbyCourts = await findNearbyCourts(latitude, longitude);
+        
+        // Update the courts display with nearby courts first
+        if (nearbyCourts.length > 0) {
+          // Combine nearby courts with existing courts
+          const combinedCourts = [...nearbyCourts, ...filteredCourts]
+            .filter((court, index, self) => 
+              index === self.findIndex((c) => c.id === court.id)
+            );
+
+          filteredCourts = combinedCourts;
+          displayCurrentPage();
+        }
+
+      } catch (error) {
+        console.error('Error getting location:', error);
+        alert('Failed to get your location. Please make sure location services are enabled.');
+      } finally {
+        hideLoading();
+      }
+    });
+  }
+</script>
