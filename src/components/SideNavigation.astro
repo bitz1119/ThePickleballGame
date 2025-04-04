@@ -61,7 +61,7 @@ const { categories = [] } = Astro.props;
                   {categories.map((category) => (
                     <li>
                       <a
-                        href={`/generated-blog/${category.slug}`}
+                        href={`/${category.slug}`}
                         class="flex items-center text-gray-400 hover:text-white transition-colors duration-200 py-2"
                       >
                         {category.icon && (

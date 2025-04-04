@@ -265,7 +265,7 @@ async function createBlogStructure(title: string) {
     // Don't include description in initial structure
     return BlogSchema.parse({
       title,
-      outputDir: "./src/pages/generated-blog",
+      outputDir: "./src/pages/",
       chapters: structure.chapters.map((chapter) => ({
         number: chapter.number,
         title: chapter.title,
@@ -375,7 +375,7 @@ async function writeBlogToMarkdown(blog: any): Promise<string> {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { topic, outputDir = "./src/pages/generated-blog" } =
+    const { topic, outputDir = "./src/pages/" } =
       await request.json();
 
     if (!import.meta.env.OPENAI_API_KEY) {

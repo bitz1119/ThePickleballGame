@@ -10,7 +10,7 @@ export const blogCategories = [
     title: 'Courts & Community',
     description: 'Reviews and guides about pickleball gear',
     icon: 'lucide:map-pin',
-    slug: 'equipment',
+    slug: 'Community',
     gradient: 'from-blue-500 to-indigo-700'
   },
   {
