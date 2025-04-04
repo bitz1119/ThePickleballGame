@@ -32,7 +32,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
     "embla-carousel-react": "^8.5.2",
-    "framer-motion": "^12.6.2",
+    "framer-motion": "^12.6.3",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.485.0",
     "mongodb": "^6.15.0",

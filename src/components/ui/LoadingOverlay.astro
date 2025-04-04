@@ -1,0 +1,30 @@
+---
+interface Props {
+  id?: string;
+}
+
+const { id = "loadingOverlay" } = Astro.props;
+---
+
+<div 
+  id={id}
+  class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300"
+  style="display: none;"
+>
+  <div class="text-center p-8 rounded-2xl bg-white/10 backdrop-blur-md">
+    <div class="w-20 h-20 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
+    <p class="text-white text-xl font-medium">Loading courts...</p>
+    <p class="text-white/70 text-sm mt-2">Please wait while we fetch the courts</p>
+  </div>
+</div>
+
+<style>
+  #loadingOverlay {
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+  }
+  
+  #loadingOverlay.opacity-0 {
+    opacity: 0;
+  }
+</style> 

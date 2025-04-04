@@ -2,54 +2,45 @@
 import Layout from '../../layouts/Layout.astro';
 import clientPromise from '../../lib/mongodb';
 import { enrichCourtData } from '../../lib/enrichCourt';
+import { Typewriter } from '../../components/ui/typewriter';
+import { TypewriterText } from '../../components/ui/typewriter-text';
+import LoadingOverlay from '../../components/ui/LoadingOverlay.astro';
+import SearchFilters from '../../components/ui/SearchFilters.astro';
+import CourtCard from '../../components/ui/CourtCard.astro';
+import Pagination from '../../components/ui/Pagination.astro';
 
-// Connect to MongoDB
+// Constants
+const ITEMS_PER_PAGE = 9;
+const GOOGLE_MAPS_API_KEY = import.meta.env.GOOGLE_MAPS_API_KEY;
+
 const client = await clientPromise;
 const db = client.db('google_maps_data');
 
-// Get all courts
-let courts = await db.collection('pickleball_courts').find({}).limit(100).toArray(); //add limit 100 for testing as tavily api hasnt full filled updating all courts data as api limit has been reached..
+// Get total count for pagination
+const totalCourts = await db.collection('pickleball_courts').countDocuments();
+const totalPages = Math.ceil(totalCourts / ITEMS_PER_PAGE);
 
-/*  the tavily api limit is maxsed out right now 
-   When got more api credits, uncomwment this section to fetch image for court.
-   using the default image for courts that doan't have picsss.
+// Get initial page of courts
+const initialPage = 1;
+const skip = (initialPage - 1) * ITEMS_PER_PAGE;
 
-// if courts  don't have images
-for (const court of courts) {
-  if (!court.images || court.images.length === 0) {
-    console.log('🔄 Fetching image for court:', court.title);
-    
-    const enrichedData = await enrichCourtData(
-      court._id.toString(),
-      court.title,
-      court.address || ''
-    );
+let courts = await db.collection('pickleball_courts')
+  .find({})
+  .skip(skip)
+  .limit(ITEMS_PER_PAGE)
+  .toArray();
 
-    if (enrichedData?.images?.length > 0) {
-      console.log('✨ Found new images for:', court.title);
-      
-      try {
-        await db.collection('pickleball_courts').updateOne(
-          { _id: court._id },
-          { 
-            $set: { 
-              images: enrichedData.images,
-              lastUpdated: new Date()
-            }
-          }
-        );
-        
-        court.images = enrichedData.images;
-        console.log('💾 Updated images in MongoDB for:', court.title);
-      } catch (error) {
-        console.error('❌ Failed to update images:', error);
-      }
-    }
-  }
-}
-*/
+// Get unique states and countries for filters
+const stateAggregation = await db.collection('pickleball_courts').aggregate([
+  { $group: { _id: "$state", count: { $sum: 1 } } },
+  { $sort: { count: -1 } }
+]).toArray();
 
-// temp data
+const countryAggregation = await db.collection('pickleball_courts').aggregate([
+  { $group: { _id: "$countryCode", count: { $sum: 1 } } }
+]).toArray();
+
+// Transform initial courts data
 const courtsData = courts.map(court => ({
   id: court._id.toString(),
   slug: court.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
@@ -72,88 +63,93 @@ const courtsData = courts.map(court => ({
   url: `/courts/${court._id}`
 }));
 
-// Filter logic
-const stateFrequency = courtsData.reduce((acc, court) => {
-  acc[court.state] = (acc[court.state] || 0) + 1;
-  return acc;
-}, {});
+const uniqueStates = stateAggregation
+  .map(item => item._id)
+  .filter((state): state is string => Boolean(state))
+  .sort((a, b) => {
+    const countA = stateAggregation.find(s => s._id === a)?.count ?? 0;
+    const countB = stateAggregation.find(s => s._id === b)?.count ?? 0;
+    return countB - countA;
+  });
 
-const uniqueStates = [...new Set(courtsData.map(court => court.state))]
-  .sort((a, b) => stateFrequency[b] - stateFrequency[a]);
+interface CountryInfo {
+  code: string;
+  name: string;
+  count: number;
+}
 
-const uniqueCountries = [...new Set(
-  courtsData
-    .map(court => court.countryCode === 'IN' ? 'India' : 
-                 court.countryCode === 'US' ? 'United States' : null)
-    .filter(Boolean)
-)].sort();
+const uniqueCountries = countryAggregation
+  .map(item => {
+    if (!item?._id) return null;
+    if (item._id === 'IN') return { code: 'IN', name: 'India', count: item.count } as CountryInfo;
+    if (item._id === 'US') return { code: 'US', name: 'United States', count: item.count } as CountryInfo;
+    return null;
+  })
+  .filter((country): country is CountryInfo => Boolean(country))
+  .sort((a, b) => b.count - a.count)
+  .map(item => item.name);
 
-const ITEMS_PER_PAGE = 9;
+// Pass initial data to the client
+const initialData = {
+  courts: courtsData,
+  totalCourts,
+  totalPages,
+  currentPage: initialPage,
+  googleMapsApiKey: GOOGLE_MAPS_API_KEY
+};
 ---
 
 <Layout title="Pickleball Courts">
+  <LoadingOverlay />
+
   <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="text-center mb-12">
       <h1 class="text-4xl font-bold text-white mb-2">Find Pickleball Courts</h1>
       <p class="text-lg text-white/70">Discover places to play near you</p>
     </div>
 
-    <!-- Search and Filter Controls -->
-    <div class="mb-8 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 backdrop-blur-sm">
-      <div class="flex flex-col md:flex-row gap-4">
-        <div class="flex-1">
-          <div class="relative group">
-            <input 
-              type="text" 
-              id="searchInput"
-              placeholder="Search by court name..."
-              class="w-full p-4 pl-12 border border-gray-200 bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 group-hover:border-pink-300"
-            />
-            <svg class="absolute left-4 top-4 h-5 w-5 text-gray-400 group-hover:text-pink-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </div>
+    <SearchFilters uniqueStates={uniqueStates} uniqueCountries={uniqueCountries} />
 
-        <div class="flex flex-col md:flex-row gap-3">
-          <select 
-            id="stateFilter"
-            class="w-full md:w-48 p-4 border border-gray-200 text-gray-700 md:text-base text-md bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 hover:border-pink-300"
-          >
-            <option value="all" class="text-gray-700">All States/Regions</option>
-            {uniqueStates.map(state => (
-              <option value={state}>{state}</option>
-            ))}
-          </select>
-
-          <select 
-            id="countryFilter"
-            class="w-full md:w-48 p-4 border border-gray-200 text-gray-700 bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 hover:border-pink-300"
-          >
-            <option value="all">All Countries</option>
-            {uniqueCountries.map(country => (
-              <option value={country}>{country}</option>
-            ))}
-          </select>
-
-          <button 
-            id="resetFilters"
-            class="px-6 py-4 bg-gray-50 text-gray-700 font-medium rounded-xl hover:bg-pink-50 hover:text-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-200 transition-all duration-300 shadow-sm hover:shadow-md"
-          >
-            Clear
-          </button>
-        </div>
+    <!-- Dynamic Title Section -->
+    <div id="dynamicTitle" class="mb-12 text-center h-16">
+      <div class="space-y-8">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+          <TypewriterText
+            client:load
+            text={["Start Your Game – Find a Court", "Where Do You Want to Play?", "Find the Perfect Court"]}
+            speed={70}
+            deleteSpeed={50}
+            delay={1500}
+            className="text-white"
+            loop={true}
+            cursor={true}
+          />
+        </h2>
       </div>
+    </div>
+
+    <!-- Location-based Title -->
+    <div id="locationTitle" class="mb-12 text-center hidden">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+        <Typewriter
+          client:load
+          text="Here Are Courts in"
+          speed={70}
+          className="text-white"
+          cursorChar={"→"}
+        />
+        <span id="locationName" class="text-yellow-400"></span>
+      </h2>
     </div>
 
     <!-- Results Summary -->
     <div class="mb-6 flex justify-between items-center">
       <div class="text-sm text-gray-600">
-        Showing <span id="visibleCount" class="font-medium">{courtsData.length}</span> of 
-        <span id="totalCount" class="font-medium">{courtsData.length}</span> courts
+        Showing <span id="visibleCount" class="font-medium">{ITEMS_PER_PAGE}</span> of 
+        <span id="totalCount" class="font-medium">{totalCourts}</span> courts
       </div>
       <div class="text-sm text-gray-500">
-        Sorted by popularity
+        Page <span id="currentPageDisplay">{initialPage}</span> of {totalPages}
       </div>
     </div>
 
@@ -168,59 +164,322 @@ const ITEMS_PER_PAGE = 9;
     <!-- Courts Grid -->
     <div id="courtsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
       {courtsData.map((court, index) => (
+        <CourtCard court={court} index={index} />
+      ))}
+    </div>
+
+    <Pagination currentPage={initialPage} totalPages={totalPages} />
+  </div>
+</Layout>
+
+<script define:vars={{ initialData, ITEMS_PER_PAGE, googleMapsApiKey: GOOGLE_MAPS_API_KEY }}>
+  console.log('🚀 Initializing courts page with data:', initialData);
+
+  // Constants and DOM elements
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const stateFilter = document.getElementById('stateFilter');
+  const countryFilter = document.getElementById('countryFilter');
+  const searchInput = document.getElementById('searchInput');
+  const resetButton = document.getElementById('resetFilters');
+  const courtsGrid = document.getElementById('courtsGrid');
+  const noResults = document.getElementById('noResults');
+  const visibleCount = document.getElementById('visibleCount');
+  const totalCountElem = document.getElementById('totalCount');
+  const prevPageBtn = document.getElementById('prevPage');
+  const nextPageBtn = document.getElementById('nextPage');
+  const pageNumbers = document.getElementById('pageNumbers');
+  const currentPageDisplay = document.getElementById('currentPageDisplay');
+  const nearMeButton = document.getElementById('nearMeButton');
+  const dynamicTitle = document.getElementById('dynamicTitle');
+  const locationTitle = document.getElementById('locationTitle');
+  const locationName = document.getElementById('locationName');
+
+  console.log('📌 DOM elements loaded:', {
+    hasLoadingOverlay: !!loadingOverlay,
+    hasStateFilter: !!stateFilter,
+    hasCountryFilter: !!countryFilter,
+    hasSearchInput: !!searchInput,
+    hasResetButton: !!resetButton,
+    hasCourtsGrid: !!courtsGrid,
+    hasNoResults: !!noResults,
+    hasVisibleCount: !!visibleCount,
+    hasTotalCount: !!totalCountElem,
+    hasPrevBtn: !!prevPageBtn,
+    hasNextBtn: !!nextPageBtn,
+    hasPageNumbers: !!pageNumbers,
+    hasCurrentPageDisplay: !!currentPageDisplay,
+    hasNearMeButton: !!nearMeButton,
+    hasDynamicTitle: !!dynamicTitle,
+    hasLocationTitle: !!locationTitle,
+    hasLocationName: !!locationName
+  });
+
+  let currentPage = initialData.currentPage;
+  let filteredCourts = initialData.courts;
+  let currentTotalPages = initialData.totalPages;
+  let isLoading = false;
+
+  let typingTimer;
+  const doneTypingInterval = 300; // Wait for 300ms after user stops typing
+
+  // Fetch suggestions for search
+  async function fetchSuggestions(searchTerm) {
+    if (!searchTerm) return [];
+    
+    try {
+      const response = await fetch(`/api/courts?search=${searchTerm}&limit=3`);
+      if (!response.ok) throw new Error('Failed to fetch suggestions');
+      const data = await response.json();
+      return data.courts;
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      return [];
+    }
+  }
+
+  // Display suggestions dropdown
+  function displaySuggestions(suggestions) {
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    if (!suggestionsContainer) return;
+
+    if (!suggestions.length) {
+      suggestionsContainer.classList.add('hidden');
+      return;
+    }
+
+    suggestionsContainer.innerHTML = suggestions.map(court => `
+      <a
+        href="/courts/${court.slug}"
+        class="block px-4 py-3 hover:bg-gray-50 flex items-start gap-3 transition-colors duration-200"
+      >
+        <img 
+          src="${court.imageUrl}" 
+          alt="${court.title}"
+          class="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+        />
+        <div class="flex-1 min-w-0">
+          <div class="font-medium text-gray-900 truncate">${court.title}</div>
+          <div class="text-sm text-gray-500 truncate">${court.address}</div>
+        </div>
+      </a>
+    `).join('');
+
+    suggestionsContainer.classList.remove('hidden');
+  }
+
+  // Handle search input
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      e.preventDefault(); // Prevent form submission
+      clearTimeout(typingTimer);
+      
+      const searchTerm = e.target.value.trim();
+      
+      // Hide suggestions if search term is empty
+      if (!searchTerm) {
+        const suggestionsContainer = document.getElementById('searchSuggestions');
+        if (suggestionsContainer) {
+          suggestionsContainer.classList.add('hidden');
+        }
+        return;
+      }
+
+      // Wait for user to stop typing before fetching suggestions
+      typingTimer = setTimeout(async () => {
+        const suggestions = await fetchSuggestions(searchTerm);
+        displaySuggestions(suggestions);
+      }, doneTypingInterval);
+    });
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      const suggestionsContainer = document.getElementById('searchSuggestions');
+      if (!searchInput.contains(e.target) && !suggestionsContainer?.contains(e.target)) {
+        suggestionsContainer?.classList.add('hidden');
+      }
+    });
+
+    // Prevent form submission on enter
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
+    });
+  }
+
+  // Show/hide loading overlay
+  function showLoading() {
+    console.log('⌛ Showing loading overlay');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'flex';
+      loadingOverlay.classList.remove('opacity-0');
+    }
+    isLoading = true;
+  }
+
+  function hideLoading() {
+    console.log('✅ Hiding loading overlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('opacity-0');
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+      }, 300);
+    }
+    isLoading = false;
+  }
+
+  // Fetch courts for a specific page
+  async function fetchCourtsForPage(page, filters = {}) {
+    console.log('🔄 Fetching courts for page', page, 'with filters:', filters);
+    showLoading();
+    try {
+      // Only include non-empty and non-'all' filters
+      const queryParams = new URLSearchParams();
+      
+      // Only add page if it's not the first page
+      if (page > 1) {
+        queryParams.append('page', page.toString());
+      }
+      
+      // Only add filters that have meaningful values
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all' && value !== 'undefined' && value.trim() !== '') {
+          queryParams.append(key, value);
+        }
+      });
+
+      // Only add the query string if we have parameters
+      const queryString = queryParams.toString();
+      const url = `/api/courts${queryString ? `?${queryString}` : ''}`;
+      console.log('🌐 Fetching from URL:', url);
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error('❌ API request failed:', response.status, response.statusText);
+        throw new Error('Failed to fetch courts');
+      }
+      
+      const data = await response.json();
+      console.log('📦 Received data:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching courts:', error);
+      return { courts: [], totalCourts: 0, totalPages: 1 };
+    } finally {
+      hideLoading();
+    }
+  }
+
+  // Update filterCourts function to handle title changes
+  let filterTimer;
+  const filterDebounceInterval = 500; // Wait for 500ms after user stops typing
+
+  async function filterCourts() {
+    clearTimeout(filterTimer);
+
+    filterTimer = setTimeout(async () => {
+      const selectedState = stateFilter?.value;
+      const selectedCountry = countryFilter?.value;
+      const dynamicTitle = document.getElementById('dynamicTitle');
+      const locationTitle = document.getElementById('locationTitle');
+      const locationName = document.getElementById('locationName');
+
+      console.log('🔍 Filtering courts with:', {
+        state: selectedState,
+        country: selectedCountry
+      });
+
+      const filters = {};
+      let locationText = '';
+
+      // Only add filters if they're not 'all'
+      if (selectedState && selectedState !== 'all') {
+        filters.state = selectedState;
+        locationText = selectedState;
+      }
+      if (selectedCountry && selectedCountry !== 'all') {
+        filters.country = selectedCountry;
+        locationText = selectedCountry;
+      }
+
+      // Update title based on filter selection
+      if (locationText) {
+        if (dynamicTitle) dynamicTitle.classList.add('hidden');
+        if (locationTitle) locationTitle.classList.remove('hidden');
+        if (locationName) {
+          locationName.textContent = locationText;
+          // Add fade-in animation
+          locationName.style.opacity = '0';
+          locationName.style.transform = 'translateY(10px)';
+          setTimeout(() => {
+            locationName.style.transition = 'all 0.5s ease-out';
+            locationName.style.opacity = '1';
+            locationName.style.transform = 'translateY(0)';
+          }, 500); // Wait for the typewriter to finish
+        }
+      } else {
+        if (dynamicTitle) dynamicTitle.classList.remove('hidden');
+        if (locationTitle) locationTitle.classList.add('hidden');
+      }
+
+      currentPage = 1; // Reset to first page when filtering
+      const data = await fetchCourtsForPage(currentPage, filters);
+      
+      filteredCourts = data.courts;
+      currentTotalPages = data.totalPages;
+      
+      console.log('📊 Filtered results:', {
+        courtsCount: filteredCourts.length,
+        totalPages: currentTotalPages
+      });
+
+      if (visibleCount) {
+        visibleCount.textContent = data.courts.length.toString();
+      }
+      if (totalCountElem) {
+        totalCountElem.textContent = data.totalCourts.toString();
+      }
+
+      if (noResults) {
+        noResults.style.display = data.courts.length === 0 ? 'block' : 'none';
+      }
+
+      displayCurrentPage();
+      updatePagination();
+    }, filterDebounceInterval);
+  }
+
+  // Pagination functions
+  function displayCurrentPage() {
+    if (!courtsGrid) return;
+
+    // Update visible count
+    if (visibleCount && filteredCourts) {
+      visibleCount.textContent = filteredCourts.length.toString();
+    }
+
+    // Generate HTML for current page courts
+    if (filteredCourts && filteredCourts.length > 0) {
+      courtsGrid.innerHTML = filteredCourts.map((court, index) => `
         <div 
           class="court-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transform transition-all duration-500 hover:shadow-2xl hover:scale-105"
-          data-state={court.state}
-          data-country={court.countryCode}
-          data-name={court.title.toLowerCase()}
-          style={`animation: fadeIn 0.6s ease-out ${index * 0.1}s both;`}
+          data-state="${court.state}"
+          data-country="${court.countryCode}"
+          data-name="${court.title.toLowerCase()}"
+          style="animation: fadeIn 0.6s ease-out ${index * 0.1}s both;"
         >
-          <a href={`/courts/${court.slug}`} class="block">
+          <a href="/courts/${court.slug}" class="block">
             <div class="relative overflow-hidden group h-64">
-              <div class="carousel-container relative w-full h-full">
-                {(court.images?.length > 0 ? court.images : [court.imageUrl]).map((image, idx) => (
-                  <div 
-                    class={`carousel-slide absolute inset-0 transition-opacity duration-500 ${idx === 0 ? 'opacity-100' : 'opacity-0'}`}
-                    data-index={idx}
-                  >
-                    <img 
-                      src={image} 
-                      alt={`${court.title} - Image ${idx + 1}`}
-                      class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-
-                {court.images?.length > 1 && (
-                  <>
-                    <button class="carousel-prev absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      ←
-                    </button>
-                    <button class="carousel-next absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      →
-                    </button>
-                    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                      {court.images.map((_, idx) => (
-                        <button 
-                          class={`w-2 h-2 rounded-full transition-colors duration-300 ${idx === 0 ? 'bg-white' : 'bg-white/50'}`}
-                          data-index={idx}
-                        >
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
+              <img 
+                src="${court.imageUrl}" 
+                alt="${court.title}"
+                class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
+                loading="lazy"
+              />
               <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                <div class="absolute bottom-0 left-0 right-0 p-6 transform transition-all duration-300">
-                  <h2 class="text-2xl font-bold text-white mb-2 transform transition-transform duration-300 translate-y-0 group-hover:translate-y-[-8px]">
-                    {court.title}
-                  </h2>
-                  <p class="text-gray-200 text-sm transform transition-all duration-300 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0">
-                    {court.address}
-                  </p>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                  <h2 class="text-2xl font-bold text-white mb-2">${court.title}</h2>
+                  <p class="text-gray-200 text-sm">${court.address}</p>
                 </div>
               </div>
             </div>
@@ -230,41 +489,41 @@ const ITEMS_PER_PAGE = 9;
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-2">
                 <div class="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
+                  ${[1, 2, 3, 4, 5].map(star => `
                     <svg 
-                      class={`h-5 w-5 ${star <= Math.round(court.totalScore) ? 'text-yellow-400' : 'text-gray-200'} transition-colors duration-300`}
+                      class="h-5 w-5 ${star <= Math.round(court.totalScore) ? 'text-yellow-400' : 'text-gray-200'}"
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                  ))}
+                  `).join('')}
                 </div>
-                <span class="font-semibold text-gray-700">{court.totalScore.toFixed(1)}</span>
+                <span class="font-semibold text-gray-700">${court.totalScore.toFixed(1)}</span>
               </div>
-              <span class="text-sm text-gray-500">
-                {court.reviewsCount} reviews
-              </span>
+              <span class="text-sm text-gray-500">${court.reviewsCount} reviews</span>
             </div>
 
-            <div class="flex flex-wrap gap-2 min-h-[80px]">
-              {court.categories.map(category => (
-                <span class="px-3 py-1.5 bg-pink-50 text-pink-700 text-sm font-medium rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-sm">
-                  {category}
-                </span>
-              ))}
+            <div class="h-32">
+              <div class="flex flex-wrap gap-2 mb-4">
+                ${court.categories.map(category => `
+                  <span class="inline-flex px-3 py-1.5 bg-pink-50 text-pink-700 text-sm font-medium rounded-full">
+                    ${category}
+                  </span>
+                `).join('')}
+              </div>
             </div>
 
             <div class="flex justify-between items-center mt-6 gap-4 pt-4 border-t border-gray-100">
               <a 
-                href={`/courts/${court.slug}`}
-                class="group flex items-center text-pink-600 hover:text-pink-700 font-medium transition-colors duration-300"
+                href="/courts/${court.slug}"
+                class="group flex items-center text-pink-600 hover:text-pink-700 font-medium"
               >
                 View details
                 <svg 
                   xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 ml-2 transform transition-transform duration-300 rotate-0 group-hover:-rotate-45"
+                  class="h-5 w-5 ml-2 transform group-hover:-rotate-45"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -273,7 +532,7 @@ const ITEMS_PER_PAGE = 9;
                 </svg>
               </a>
               <a
-                href={court.url}
+                href="${court.url}"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg transition-all duration-300 hover:bg-pink-700 hover:shadow-lg active:transform active:scale-95"
@@ -287,164 +546,334 @@ const ITEMS_PER_PAGE = 9;
             </div>
           </div>
         </div>
-      ))}
-    </div>
-
-    <!-- Pagination -->
-    <div id="pagination" class="mt-12 flex justify-center items-center gap-2">
-      <button 
-        id="prevPage"
-        class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        Previous
-      </button>
-      <div id="pageNumbers" class="flex gap-2">
-        <!-- Page numbers will be inserted here -->
-      </div>
-      <button 
-        id="nextPage"
-        class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        Next
-      </button>
-    </div>
-  </div>
-</Layout>
-
-<script>
-  // Constants and DOM elementsx
-  const ITEMS_PER_PAGE = 9;
-  const stateFilter = document.getElementById('stateFilter');
-  const countryFilter = document.getElementById('countryFilter');
-  const searchInput = document.getElementById('searchInput');
-  const resetButton = document.getElementById('resetFilters');
-  const courtCards = document.querySelectorAll('.court-card');
-  const noResults = document.getElementById('noResults');
-  const visibleCount = document.getElementById('visibleCount');
-  const totalCount = document.getElementById('totalCount');
-  const prevPageBtn = document.getElementById('prevPage');
-  const nextPageBtn = document.getElementById('nextPage');
-  const pageNumbers = document.getElementById('pageNumbers');
-
-  let currentPage = 1;
-  let filteredCards = Array.from(courtCards);
-
-  // Filter function
-  function filterCourts() {
-    const selectedState = stateFilter.value;
-    const selectedCountry = countryFilter.value;
-    const searchTerm = searchInput.value.toLowerCase().trim();
-
-    const countryNameToCode = {
-      'India': 'IN',
-      'United States': 'US'
-    };
-
-    const selectedCountryCode = selectedCountry === 'all' ? 'all' : countryNameToCode[selectedCountry];
-
-    currentPage = 1;
-    filteredCards = Array.from(courtCards).filter(card => {
-      const matchesState = selectedState === 'all' || card.dataset.state === selectedState;
-      const matchesCountry = selectedCountryCode === 'all' || card.dataset.country === selectedCountryCode;
-      const matchesSearch = card.dataset.name.includes(searchTerm);
-      return matchesState && matchesCountry && matchesSearch;
-    });
-
-    visibleCount.textContent = filteredCards.length;
-    noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
-    updatePagination();
-    displayCurrentPage();
+      `).join('');
+    } else {
+      // Show no results message if no courts are found
+      if (noResults) {
+        noResults.style.display = 'block';
+      }
+      courtsGrid.innerHTML = '';
+    }
+    updateCurrentPageDisplay();
   }
 
-  // Pagination functions
-  function updatePagination() {
-    const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE);
-    prevPageBtn.disabled = currentPage === 1;
-    nextPageBtn.disabled = currentPage === totalPages;
+  // Update current page display
+  function updateCurrentPageDisplay() {
+    if (currentPageDisplay) {
+      currentPageDisplay.textContent = currentPage.toString();
+    }
+  }
 
+  // Update pagination functions
+  async function changePage(newPage) {
+    if (newPage === currentPage) return;
+    
+    currentPage = newPage;
+    
+    // Get current filter values
+    const filters = {};
+    const selectedState = stateFilter?.value;
+    const selectedCountry = countryFilter?.value;
+
+    if (selectedState && selectedState !== 'all') {
+      filters.state = selectedState;
+    }
+    if (selectedCountry && selectedCountry !== 'all') {
+      filters.country = selectedCountry;
+    }
+
+    const data = await fetchCourtsForPage(currentPage, filters);
+    filteredCourts = data.courts;
+    currentTotalPages = data.totalPages;
+
+    if (visibleCount) {
+      visibleCount.textContent = data.courts.length.toString();
+    }
+    if (totalCountElem) {
+      totalCountElem.textContent = data.totalCourts.toString();
+    }
+
+    // Hide no results message initially
+    if (noResults) {
+      noResults.style.display = 'none';
+    }
+
+    displayCurrentPage();
+    updatePagination();
+  }
+
+  // Update the page number click handler
+  function updatePagination() {
+    if (!prevPageBtn || !nextPageBtn || !pageNumbers) return;
+    
+    // Update button states
+    prevPageBtn.disabled = currentPage === 1;
+    nextPageBtn.disabled = currentPage === currentTotalPages;
+
+    // Clear existing page numbers
     pageNumbers.innerHTML = '';
     
-    const createPageButton = (pageNum, isCurrent) => {
-      const btn = document.createElement('button');
-      btn.className = `px-3 py-1 rounded-lg ${isCurrent ? 'bg-pink-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`;
-      btn.textContent = pageNum;
-      btn.addEventListener('click', () => {
-        currentPage = pageNum;
-        displayCurrentPage();
-        updatePagination();
-      });
-      return btn;
-    };
-
-    const createEllipsis = () => {
-      const span = document.createElement('span');
-      span.className = 'px-2 text-gray-500';
-      span.textContent = '...';
-      return span;
-    };
-
-
-    if (totalPages > 0) pageNumbers.appendChild(createPageButton(1, currentPage === 1));
-
-    if (totalPages > 7) {
-      if (currentPage > 3) pageNumbers.appendChild(createEllipsis());
-      
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      
-      for (let i = start; i <= end; i++) {
-        pageNumbers.appendChild(createPageButton(i, i === currentPage));
-      }
-
-      if (currentPage < totalPages - 2) pageNumbers.appendChild(createEllipsis());
-    } else {
-      for (let i = 2; i < totalPages; i++) {
-        pageNumbers.appendChild(createPageButton(i, i === currentPage));
+    // Create page number buttons
+    for (let i = 1; i <= currentTotalPages; i++) {
+      if (
+        i === 1 || 
+        i === currentTotalPages || 
+        (i >= currentPage - 1 && i <= currentPage + 1)
+      ) {
+        const button = document.createElement('button');
+        button.className = `px-3 py-1 rounded-lg transition-colors ${
+          currentPage === i 
+            ? 'bg-pink-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+        }`;
+        button.textContent = i.toString();
+        button.addEventListener('click', () => changePage(i));
+        pageNumbers.appendChild(button);
+      } else if (
+        (i === 2 && currentPage > 3) ||
+        (i === currentTotalPages - 1 && currentPage < currentTotalPages - 2)
+      ) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'px-2 text-gray-500';
+        ellipsis.textContent = '...';
+        pageNumbers.appendChild(ellipsis);
       }
     }
-
-    if (totalPages > 1) pageNumbers.appendChild(createPageButton(totalPages, currentPage === totalPages));
+    updateCurrentPageDisplay();
   }
 
-  function displayCurrentPage() {
-    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIdx = startIdx + ITEMS_PER_PAGE;
+  // Update prev/next button handlers
+  prevPageBtn?.addEventListener('click', () => {
+    if (currentPage > 1) {
+      changePage(currentPage - 1);
+    }
+  });
 
-    courtCards.forEach(card => card.style.display = 'none');
-    filteredCards.slice(startIdx, endIdx).forEach(card => {
-      card.style.display = 'block';
-    });
-  }
+  nextPageBtn?.addEventListener('click', () => {
+    if (currentPage < currentTotalPages) {
+      changePage(currentPage + 1);
+    }
+  });
 
   // Event listeners
-  stateFilter.addEventListener('change', filterCourts);
-  countryFilter.addEventListener('change', filterCourts);
-  searchInput.addEventListener('input', filterCourts);
-  prevPageBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-      currentPage--;
-      displayCurrentPage();
-      updatePagination();
-    }
-  });
-  nextPageBtn.addEventListener('click', () => {
-    const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE);
-    if (currentPage < totalPages) {
-      currentPage++;
-      displayCurrentPage();
-      updatePagination();
-    }
-  });
-  resetButton.addEventListener('click', () => {
-    stateFilter.value = 'all';
-    countryFilter.value = 'all';
-    searchInput.value = '';
+  stateFilter?.addEventListener('change', filterCourts);
+  countryFilter?.addEventListener('change', filterCourts);
+  
+  resetButton?.addEventListener('click', () => {
+    if (stateFilter) stateFilter.value = 'all';
+    if (countryFilter) countryFilter.value = 'all';
+    if (searchInput) searchInput.value = '';
+    
+    const dynamicTitle = document.getElementById('dynamicTitle');
+    const locationTitle = document.getElementById('locationTitle');
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    
+    if (dynamicTitle) dynamicTitle.classList.remove('hidden');
+    if (locationTitle) locationTitle.classList.add('hidden');
+    if (suggestionsContainer) suggestionsContainer.classList.add('hidden');
+    
     currentPage = 1;
     filterCourts();
   });
 
+  // Near Me functionality
+  if (nearMeButton) {
+    nearMeButton.addEventListener('click', async () => {
+      try {
+        showLoading();
+        
+        // First check if geolocation is supported
+        if (!navigator.geolocation) {
+          throw new Error('Your device or browser does not support location services. Please try on a device with GPS or use the search filters instead.');
+        }
+
+        // Check if we're on HTTPS or a local connection
+        const isLocalhost = location.hostname === 'localhost' || 
+                          location.hostname === '127.0.0.1' || 
+                          location.hostname.startsWith('192.168.') || 
+                          location.hostname.startsWith('10.') ||
+                          location.hostname.startsWith('172.');
+
+        if (location.protocol !== 'https:' && !isLocalhost) {
+          throw new Error('For security reasons, location services require a secure HTTPS connection. Please access this site via HTTPS.');
+        }
+
+        // Check current permission state
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        console.log('Current permission state:', permissionStatus.state);
+
+        if (permissionStatus.state === 'denied') {
+          throw new Error(`Location access is blocked. Please follow these steps to enable it:
+1. Click the site settings icon (🔒) in your browser's address bar
+2. Find "Location" in the permissions list
+3. Change the setting to "Allow"
+4. Refresh the page and try again`);
+        }
+
+        // If permission is prompt or granted, request location
+        const position = await new Promise((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Location request timed out. Please check your connection and try again.'));
+          }, 30000); // 30 second timeout
+
+          // Watch for permission changes
+          permissionStatus.addEventListener('change', () => {
+            console.log('Permission state changed to:', permissionStatus.state);
+            if (permissionStatus.state === 'denied') {
+              clearTimeout(timeoutId);
+              reject(new Error('Location access was denied. Please enable it in your browser settings and try again.'));
+            }
+          });
+
+          // Request position with browser's native dialog
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              clearTimeout(timeoutId);
+              resolve(pos);
+            },
+            (error) => {
+              clearTimeout(timeoutId);
+              switch(error.code) {
+                case error.PERMISSION_DENIED:
+                  reject(new Error(`Location access was denied. Please follow these steps:
+1. Click the site settings icon (🔒) in your browser's address bar
+2. Find "Location" in the permissions list
+3. Change the setting to "Allow"
+4. Refresh the page and try again`));
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  reject(new Error(`Unable to detect your location. Please try:
+1. Enabling GPS if you're on mobile
+2. Checking your device's location services
+3. Using a device with GPS capabilities
+4. Using the search filters instead`));
+                  break;
+                case error.TIMEOUT:
+                  reject(new Error('Location request timed out. Please check your internet connection and try again.'));
+                  break;
+                default:
+                  reject(new Error(`Location error: ${error.message}`));
+              }
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 30000,
+              maximumAge: 0
+            }
+          );
+        });
+
+        const coords = position.coords;
+        const { latitude, longitude } = coords;
+        console.log('📍 Your coordinates:', { latitude, longitude });
+
+        // Get location name using reverse geocoding
+        try {
+          const geocodeResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleMapsApiKey}`);
+          const geocodeData = await geocodeResponse.json();
+          
+          if (geocodeData.results && geocodeData.results.length > 0) {
+            const locationDetails = geocodeData.results[0];
+            console.log('📍 Location details:', locationDetails);
+            
+            // Find city and state from address components
+            let city = '';
+            let state = '';
+            let country = '';
+            
+            locationDetails.address_components.forEach((component) => {
+              if (component.types.includes('locality')) {
+                city = component.long_name;
+              } else if (component.types.includes('administrative_area_level_1')) {
+                state = component.long_name;
+              } else if (component.types.includes('country')) {
+                country = component.long_name;
+              }
+            });
+
+            const locationText = [city, state, country].filter(Boolean).join(', ');
+            console.log('📍 Formatted location:', locationText);
+
+            // Update UI with location
+            if (dynamicTitle) dynamicTitle.classList.add('hidden');
+            if (locationTitle) locationTitle.classList.remove('hidden');
+            if (locationName) {
+              locationName.textContent = locationText || `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            }
+          } else {
+            // If no results from geocoding, show coordinates
+            if (locationName) {
+              locationName.textContent = `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            }
+          }
+        } catch (error) {
+          console.error('Error getting location name:', error);
+          // Fallback to showing coordinates
+          if (locationName) {
+            locationName.textContent = `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          }
+        }
+
+        // Update UI to show loading state
+        if (dynamicTitle) dynamicTitle.classList.add('hidden');
+        if (locationTitle) locationTitle.classList.remove('hidden');
+        if (locationName) locationName.textContent = 'Finding nearby courts...';
+
+        // Fetch nearby courts
+        const response = await fetch(`/api/courts?lat=${latitude}&lng=${longitude}`);
+        if (!response.ok) throw new Error('Failed to fetch nearby courts');
+        
+        const data = await response.json();
+        filteredCourts = data.courts;
+
+        // Update location name
+        if (locationName) {
+          locationName.textContent = 'Near Your Location';
+        }
+
+        // Update display
+        displayCurrentPage();
+        updatePagination();
+
+      } catch (error) {
+        console.error('Error getting location:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        
+        // Create a more user-friendly error dialog
+        const errorDialog = document.createElement('div');
+        errorDialog.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center';
+        errorDialog.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 max-w-md mx-4">
+            <div class="text-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">Location Access Error</h3>
+            </div>
+            <div class="text-gray-600 space-y-4">
+              <p>${errorMessage}</p>
+            </div>
+            <div class="mt-6 flex justify-end">
+              <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200" onclick="this.parentElement.parentElement.parentElement.remove()">
+                Close
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(errorDialog);
+      } finally {
+        hideLoading();
+      }
+    });
+  }
+
   // Initial setup
-  filterCourts();
+  window.addEventListener('DOMContentLoaded', () => {
+    console.log('🎬 Page loaded, initializing...');
+    displayCurrentPage(); // Display initial courts first
+    updatePagination(); // Update pagination with initial data
+    hideLoading();
+  });
 </script>
 
 <style>
@@ -494,5 +923,64 @@ const ITEMS_PER_PAGE = 9;
     transition-property: transform, opacity;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
+  }
+
+  /* Smooth transitions */
+  .transition-opacity {
+    transition-property: opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+
+  #loadingOverlay {
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+  }
+  
+  #loadingOverlay.opacity-0 {
+    opacity: 0;
+  }
+
+  /* Update these styles */
+  .relative {
+    position: relative;
+    isolation: isolate;
+  }
+
+  #searchSuggestions {
+    position: absolute;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+  }
+
+  #searchSuggestions a {
+    position: relative;
+    z-index: 9999;
+  }
+
+  #searchSuggestions a:not(:last-child) {
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  }
+
+  #searchSuggestions a:hover {
+    background-color: rgba(249, 250, 251, 0.8);
+  }
+
+  /* Add new style for the search container */
+  .search-container {
+    position: relative;
+    z-index: 999;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 </style>
