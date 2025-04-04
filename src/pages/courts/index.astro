@@ -198,8 +198,14 @@ const initialData = {
 
     <!-- Location-based Title -->
     <div id="locationTitle" class="mb-12 text-center hidden">
-      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold">
-        <span class="text-white">Courts in </span>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+        <Typewriter
+          client:load
+          text="Here Are Courts in"
+          speed={70}
+          className="text-white"
+          cursorChar={"→"}
+        />
         <span id="locationName" class="text-yellow-400"></span>
       </h2>
     </div>
@@ -557,7 +563,7 @@ const initialData = {
     }
   }
 
-  // Update filterCourts function to only include meaningful filters
+  // Update filterCourts function to handle title changes
   let filterTimer;
   const filterDebounceInterval = 500; // Wait for 500ms after user stops typing
 
@@ -567,6 +573,9 @@ const initialData = {
     filterTimer = setTimeout(async () => {
       const selectedState = stateFilter?.value;
       const selectedCountry = countryFilter?.value;
+      const dynamicTitle = document.getElementById('dynamicTitle');
+      const locationTitle = document.getElementById('locationTitle');
+      const locationName = document.getElementById('locationName');
 
       console.log('🔍 Filtering courts with:', {
         state: selectedState,
@@ -574,12 +583,36 @@ const initialData = {
       });
 
       const filters = {};
+      let locationText = '';
+
       // Only add filters if they're not 'all'
       if (selectedState && selectedState !== 'all') {
         filters.state = selectedState;
+        locationText = selectedState;
       }
       if (selectedCountry && selectedCountry !== 'all') {
         filters.country = selectedCountry;
+        locationText = selectedCountry;
+      }
+
+      // Update title based on filter selection
+      if (locationText) {
+        if (dynamicTitle) dynamicTitle.classList.add('hidden');
+        if (locationTitle) locationTitle.classList.remove('hidden');
+        if (locationName) {
+          locationName.textContent = locationText;
+          // Add fade-in animation
+          locationName.style.opacity = '0';
+          locationName.style.transform = 'translateY(10px)';
+          setTimeout(() => {
+            locationName.style.transition = 'all 0.5s ease-out';
+            locationName.style.opacity = '1';
+            locationName.style.transform = 'translateY(0)';
+          }, 500); // Wait for the typewriter to finish
+        }
+      } else {
+        if (dynamicTitle) dynamicTitle.classList.remove('hidden');
+        if (locationTitle) locationTitle.classList.add('hidden');
       }
 
       currentPage = 1; // Reset to first page when filtering
@@ -823,10 +856,15 @@ const initialData = {
     if (stateFilter) stateFilter.value = 'all';
     if (countryFilter) countryFilter.value = 'all';
     if (searchInput) searchInput.value = '';
+    
+    const dynamicTitle = document.getElementById('dynamicTitle');
+    const locationTitle = document.getElementById('locationTitle');
     const suggestionsContainer = document.getElementById('searchSuggestions');
-    if (suggestionsContainer) {
-      suggestionsContainer.classList.add('hidden');
-    }
+    
+    if (dynamicTitle) dynamicTitle.classList.remove('hidden');
+    if (locationTitle) locationTitle.classList.add('hidden');
+    if (suggestionsContainer) suggestionsContainer.classList.add('hidden');
+    
     currentPage = 1;
     filterCourts();
   });
@@ -950,9 +988,34 @@ const initialData = {
 </style>
 
 <script>
-  import { findNearbyCourts } from '../../lib/places';
+  // Shared utility functions
+  function showLoading() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'flex';
+      loadingOverlay.classList.remove('opacity-0');
+    }
+  }
 
-  // Handle Near Me functionality
+  function hideLoading() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('opacity-0');
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+      }, 300);
+    }
+  }
+
+  // Shared state
+  let filteredCourts = [];
+  function displayCurrentPage() {
+    const courtsGrid = document.getElementById('courtsGrid');
+    if (!courtsGrid) return;
+    // Rest of displayCurrentPage implementation...
+  }
+
+  // Near Me functionality
   const nearMeButton = document.getElementById('nearMeButton');
   const dynamicTitle = document.getElementById('dynamicTitle');
   const locationTitle = document.getElementById('locationTitle');
@@ -963,72 +1026,138 @@ const initialData = {
       try {
         showLoading();
         
-        // Request user's location
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-
-        const { latitude, longitude } = position.coords;
-
-        // Get location details
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.GOOGLE_MAPS_API_KEY}`
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch location details');
+        // First check if geolocation is supported
+        if (!navigator.geolocation) {
+          throw new Error('Your device or browser does not support location services. Please try on a device with GPS or use the search filters instead.');
         }
 
-        const data = await response.json();
-        
-        if (data.status !== 'OK') {
-          throw new Error('Geocoding API error');
+        // Check if we're on HTTPS or a local connection
+        const isLocalhost = location.hostname === 'localhost' || 
+                          location.hostname === '127.0.0.1' || 
+                          location.hostname.startsWith('192.168.') || 
+                          location.hostname.startsWith('10.') ||
+                          location.hostname.startsWith('172.');
+
+        if (location.protocol !== 'https:' && !isLocalhost) {
+          throw new Error('For security reasons, location services require a secure HTTPS connection. Please access this site via HTTPS.');
         }
 
-        // Extract city name
-        let cityName = '';
-        data.results[0].address_components.forEach((component: any) => {
-          if (component.types.includes('locality')) {
-            cityName = component.long_name;
-          }
-        });
+        // Check current permission state
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        console.log('Current permission state:', permissionStatus.state);
 
-        // Update UI with location name
-        if (dynamicTitle && locationTitle && locationName) {
-          dynamicTitle.classList.add('hidden');
-          locationTitle.classList.remove('hidden');
-          locationName.textContent = cityName;
-          
-          // Add typewriter effect
-          const typewriter = new Typewriter({
-            text: cityName,
-            speed: 70,
-            className: "text-yellow-400",
-            cursorChar: "_"
+        if (permissionStatus.state === 'denied') {
+          throw new Error(`Location access is blocked. Please follow these steps to enable it:
+1. Click the site settings icon (🔒) in your browser's address bar
+2. Find "Location" in the permissions list
+3. Change the setting to "Allow"
+4. Refresh the page and try again`);
+        }
+
+        // If permission is prompt or granted, request location
+        const position = await new Promise((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Location request timed out. Please check your connection and try again.'));
+          }, 30000); // 30 second timeout
+
+          // Watch for permission changes
+          permissionStatus.addEventListener('change', () => {
+            console.log('Permission state changed to:', permissionStatus.state);
+            if (permissionStatus.state === 'denied') {
+              clearTimeout(timeoutId);
+              reject(new Error('Location access was denied. Please enable it in your browser settings and try again.'));
+            }
           });
-          
-          locationName.innerHTML = '';
-          locationName.appendChild(typewriter);
-        }
+
+          // Request position with browser's native dialog
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              clearTimeout(timeoutId);
+              resolve(pos);
+            },
+            (error) => {
+              clearTimeout(timeoutId);
+              switch(error.code) {
+                case error.PERMISSION_DENIED:
+                  reject(new Error(`Location access was denied. Please follow these steps:
+1. Click the site settings icon (🔒) in your browser's address bar
+2. Find "Location" in the permissions list
+3. Change the setting to "Allow"
+4. Refresh the page and try again`));
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  reject(new Error(`Unable to detect your location. Please try:
+1. Enabling GPS if you're on mobile
+2. Checking your device's location services
+3. Using a device with GPS capabilities
+4. Using the search filters instead`));
+                  break;
+                case error.TIMEOUT:
+                  reject(new Error('Location request timed out. Please check your internet connection and try again.'));
+                  break;
+                default:
+                  reject(new Error(`Location error: ${error.message}`));
+              }
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 30000,
+              maximumAge: 0
+            }
+          );
+        });
+
+        const coords = position.coords;
+        const { latitude, longitude } = coords;
+
+        // Update UI to show loading state
+        if (dynamicTitle) dynamicTitle.classList.add('hidden');
+        if (locationTitle) locationTitle.classList.remove('hidden');
+        if (locationName) locationName.textContent = 'Finding nearby courts...';
 
         // Fetch nearby courts
-        const nearbyCourts = await findNearbyCourts(latitude, longitude);
+        const response = await fetch(`/api/courts?lat=${latitude}&lng=${longitude}`);
+        if (!response.ok) throw new Error('Failed to fetch nearby courts');
         
-        // Update the courts display with nearby courts first
-        if (nearbyCourts.length > 0) {
-          // Combine nearby courts with existing courts
-          const combinedCourts = [...nearbyCourts, ...filteredCourts]
-            .filter((court, index, self) => 
-              index === self.findIndex((c) => c.id === court.id)
-            );
+        const data = await response.json();
+        filteredCourts = data.courts;
 
-          filteredCourts = combinedCourts;
+        // Update location name
+        if (locationName) {
+          locationName.textContent = 'Near Your Location';
+        }
+
+        // Update display if the function is available
+        if (typeof displayCurrentPage === 'function') {
           displayCurrentPage();
         }
 
       } catch (error) {
         console.error('Error getting location:', error);
-        alert('Failed to get your location. Please make sure location services are enabled.');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        
+        // Create a more user-friendly error dialog
+        const errorDialog = document.createElement('div');
+        errorDialog.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center';
+        errorDialog.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 max-w-md mx-4">
+            <div class="text-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">Location Access Error</h3>
+            </div>
+            <div class="text-gray-600 space-y-4">
+              <p>${errorMessage}</p>
+            </div>
+            <div class="mt-6 flex justify-end">
+              <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200" onclick="this.parentElement.parentElement.parentElement.remove()">
+                Close
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(errorDialog);
       } finally {
         hideLoading();
       }
