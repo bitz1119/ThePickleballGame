@@ -129,6 +129,11 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# SSL certificates
+.cert/
+*.pem
+*.key
+*.crt
 
 # google map sdk
 google-maps-scraper/

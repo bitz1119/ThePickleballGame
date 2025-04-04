@@ -4,6 +4,10 @@ import clientPromise from '../../lib/mongodb';
 import { enrichCourtData } from '../../lib/enrichCourt';
 import { Typewriter } from '../../components/ui/typewriter';
 import { TypewriterText } from '../../components/ui/typewriter-text';
+import LoadingOverlay from '../../components/ui/LoadingOverlay.astro';
+import SearchFilters from '../../components/ui/SearchFilters.astro';
+import CourtCard from '../../components/ui/CourtCard.astro';
+import Pagination from '../../components/ui/Pagination.astro';
 
 // Constants
 const ITEMS_PER_PAGE = 9;
@@ -96,18 +100,7 @@ const initialData = {
 ---
 
 <Layout title="Pickleball Courts">
-  <!-- Loading Overlay -->
-  <div 
-    id="loadingOverlay" 
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300"
-    style="display: none;"
-  >
-    <div class="text-center p-8 rounded-2xl bg-white/10 backdrop-blur-md">
-      <div class="w-20 h-20 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
-      <p class="text-white text-xl font-medium">Loading courts...</p>
-      <p class="text-white/70 text-sm mt-2">Please wait while we fetch the courts</p>
-    </div>
-  </div>
+  <LoadingOverlay />
 
   <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="text-center mb-12">
@@ -115,69 +108,7 @@ const initialData = {
       <p class="text-lg text-white/70">Discover places to play near you</p>
     </div>
 
-    <!-- Search and Filter Controls -->
-    <div class="mb-8 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 backdrop-blur-sm relative z-[999]">
-      <div class="flex flex-col md:flex-row gap-4">
-        <div class="flex-1">
-          <div class="relative group">
-            <input 
-              type="text" 
-              id="searchInput"
-              placeholder="Search by court name..."
-              class="w-full p-4 pl-12 border border-gray-200 bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 group-hover:border-pink-300 text-gray-900"
-              autocomplete="off"
-            />
-            <svg class="absolute left-4 top-4 h-5 w-5 text-gray-400 group-hover:text-pink-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-            </svg>
-            <!-- Suggestions Dropdown -->
-            <div id="searchSuggestions" class="hidden absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden max-h-[300px] overflow-y-auto backdrop-blur-sm">
-              <!-- Suggestions will be inserted here -->
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-col md:flex-row gap-3">
-          <button
-            id="nearMeButton"
-            class="px-6 py-4 bg-pink-50 text-pink-600 font-medium rounded-xl hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-200 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Near Me
-          </button>
-
-          <select 
-            id="stateFilter"
-            class="w-full md:w-48 p-4 border border-gray-200 text-gray-700 md:text-base text-md bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 hover:border-pink-300"
-          >
-            <option value="all" class="text-gray-700">All States/Regions</option>
-            {uniqueStates.map(state => (
-              <option value={state}>{state}</option>
-            ))}
-          </select>
-
-          <select 
-            id="countryFilter"
-            class="w-full md:w-48 p-4 border border-gray-200 text-gray-700 bg-white/50 rounded-xl shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-300 hover:border-pink-300"
-          >
-            <option value="all">All Countries</option>
-            {uniqueCountries.map(country => (
-              <option value={country}>{country}</option>
-            ))}
-          </select>
-
-          <button 
-            id="resetFilters"
-            class="px-6 py-4 bg-gray-50 text-gray-700 font-medium rounded-xl hover:bg-pink-50 hover:text-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-200 transition-all duration-300 shadow-sm hover:shadow-md"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-    </div>
+    <SearchFilters uniqueStates={uniqueStates} uniqueCountries={uniqueCountries} />
 
     <!-- Dynamic Title Section -->
     <div id="dynamicTitle" class="mb-12 text-center h-16">
@@ -233,144 +164,11 @@ const initialData = {
     <!-- Courts Grid -->
     <div id="courtsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
       {courtsData.map((court, index) => (
-        <div 
-          class="court-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transform transition-all duration-500 hover:shadow-2xl hover:scale-105"
-          data-state={court.state}
-          data-country={court.countryCode}
-          data-name={court.title.toLowerCase()}
-          style={`animation: fadeIn 0.6s ease-out ${index * 0.1}s both;`}
-        >
-          <a href={`/courts/${court.slug}`} class="block">
-            <div class="relative overflow-hidden group h-64">
-              <div class="carousel-container relative w-full h-full">
-                {(Array.isArray(court.images) && court.images.length > 0 ? court.images : [court.imageUrl]).map((image: string, idx: number) => (
-                  <div 
-                    class={`carousel-slide absolute inset-0 transition-opacity duration-500 ${idx === 0 ? 'opacity-100' : 'opacity-0'}`}
-                    data-index={idx}
-                  >
-                    <img 
-                      src={image} 
-                      alt={`${court.title} - Image ${idx + 1}`}
-                      class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-
-                {court.images?.length > 1 && (
-                  <>
-                    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                      {court.images.map((_, idx) => (
-                        <button 
-                          class={`w-2 h-2 rounded-full transition-colors duration-300 ${idx === 0 ? 'bg-white' : 'bg-white/50'}`}
-                          data-index={idx}
-                        >
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                <div class="absolute bottom-0 left-0 right-0 p-6 transform transition-all duration-300">
-                  <h2 class="text-2xl font-bold text-white mb-2 transform transition-transform duration-300 translate-y-0 group-hover:translate-y-[-8px]">
-                    {court.title}
-                  </h2>
-                  <p class="text-gray-200 text-sm transform transition-all duration-300 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0">
-                    {court.address}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </a>
-
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2">
-                <div class="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg 
-                      class={`h-5 w-5 ${star <= Math.round(court.totalScore) ? 'text-yellow-400' : 'text-gray-200'} transition-colors duration-300`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <span class="font-semibold text-gray-700">{court.totalScore.toFixed(1)}</span>
-              </div>
-              <span class="text-sm text-gray-500">
-                {court.reviewsCount} reviews
-              </span>
-            </div>
-            <div class="h-32">
-            <div class="flex flex-wrap gap-2 mb-4">
-              {court.categories.map(category => (
-                <span class="inline-flex px-3 py-1.5 bg-pink-50 font-poppins text-pink-700 text-sm font-medium rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-sm">
-                  {category}
-                </span>
-              ))}
-            </div>
-          </div>
-
-            <div class="flex justify-between items-center mt-6 gap-4 pt-4 border-t border-gray-100">
-              <a 
-                href={`/courts/${court.slug}`}
-                class="group flex items-center text-pink-600 hover:text-pink-700 font-medium transition-colors duration-300"
-              >
-                View details
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 ml-2 transform transition-transform duration-300 rotate-0 group-hover:-rotate-45"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </a>
-              <a
-                href={court.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg transition-all duration-300 hover:bg-pink-700 hover:shadow-lg active:transform active:scale-95"
-              >
-                Directions
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
+        <CourtCard court={court} index={index} />
       ))}
     </div>
 
-    <!-- Client-side Pagination -->
-    <div class="mt-12 flex justify-center items-center gap-2">
-      <button 
-        id="prevPage"
-        class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        disabled
-      >
-        Previous
-      </button>
-      
-      <div id="pageNumbers" class="flex gap-2">
-        <!-- Page numbers will be inserted here -->
-      </div>
-
-      <button 
-        id="nextPage"
-        class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        Next
-      </button>
-    </div>
+    <Pagination currentPage={initialPage} totalPages={totalPages} />
   </div>
 </Layout>
 

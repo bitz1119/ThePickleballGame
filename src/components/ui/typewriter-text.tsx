@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 export interface TypewriterProps {
   text: string | string[];
   speed?: number;
-  cursor?: string;
+  cursor?: boolean;
   loop?: boolean;
   deleteSpeed?: number;
   delay?: number;
@@ -15,64 +15,61 @@ export interface TypewriterProps {
  
 export function TypewriterText({
   text,
-  speed = 100,
-  cursor = "|",
-  loop = false,
-  deleteSpeed = 50,
+  speed = 50,
+  deleteSpeed = 30,
   delay = 1500,
-  className,
+  className = '',
+  loop = false,
+  cursor = false
 }: TypewriterProps) {
   const [displayText, setDisplayText] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [textArrayIndex, setTextArrayIndex] = useState(0);
+  const [isWaiting, setIsWaiting] = useState(false);
  
-  // Validate and process input text
-  const textArray = Array.isArray(text) ? text : [text];
-  const currentText = textArray[textArrayIndex] || "";
+  const texts = Array.isArray(text) ? text : [text];
  
   useEffect(() => {
-    if (!currentText) return;
+    if (isWaiting) {
+      const waitTimer = setTimeout(() => {
+        setIsWaiting(false);
+        setIsDeleting(true);
+      }, delay);
+      return () => clearTimeout(waitTimer);
+    }
  
-    const timeout = setTimeout(
-      () => {
-        if (!isDeleting) {
-          if (currentIndex < currentText.length) {
-            setDisplayText((prev) => prev + currentText[currentIndex]);
-            setCurrentIndex((prev) => prev + 1);
-          } else if (loop) {
-            setTimeout(() => setIsDeleting(true), delay);
-          }
-        } else {
-          if (displayText.length > 0) {
-            setDisplayText((prev) => prev.slice(0, -1));
-          } else {
-            setIsDeleting(false);
-            setCurrentIndex(0);
-            setTextArrayIndex((prev) => (prev + 1) % textArray.length);
-          }
-        }
-      },
-      isDeleting ? deleteSpeed : speed,
-    );
+    if (isDeleting) {
+      if (displayText === '') {
+        setIsDeleting(false);
+        setCurrentTextIndex((prev) => (prev + 1) % texts.length);
+        return;
+      }
  
-    return () => clearTimeout(timeout);
-  }, [
-    currentIndex,
-    isDeleting,
-    currentText,
-    loop,
-    speed,
-    deleteSpeed,
-    delay,
-    displayText,
-    text,
-  ]);
+      const deleteTimer = setTimeout(() => {
+        setDisplayText((prev) => prev.slice(0, -1));
+      }, deleteSpeed);
+      return () => clearTimeout(deleteTimer);
+    }
+ 
+    const currentFullText = texts[currentTextIndex];
+    if (displayText === currentFullText) {
+      if (!loop && currentTextIndex === texts.length - 1) {
+        return;
+      }
+      setIsWaiting(true);
+      return;
+    }
+ 
+    const typeTimer = setTimeout(() => {
+      setDisplayText((prev) => currentFullText.slice(0, prev.length + 1));
+    }, speed);
+    return () => clearTimeout(typeTimer);
+  }, [displayText, currentTextIndex, isDeleting, isWaiting, texts, speed, deleteSpeed, delay, loop]);
  
   return (
     <span className={className}>
       {displayText}
-      <span className="animate-pulse">{cursor}</span>
+      {cursor && <span className="animate-blink">|</span>}
     </span>
   );
 } 
