@@ -6,9 +6,14 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const { courtId, description, images, socialLinks, lastUpdated } = await request.json();
     
+    // Preserve description as is - could be a string or object with content
+    let descriptionToSave = description;
+    
     console.log('📝 Received enrichment data for court:', {
       courtId,
-      hasDescription: !!description,
+      hasDescription: !!descriptionToSave,
+      descriptionType: typeof descriptionToSave,
+      isDescriptionObject: descriptionToSave && typeof descriptionToSave === 'object',
       imagesCount: images?.length || 0,
       socialLinksCount: socialLinks?.length || 0
     });
@@ -22,7 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
       { _id: new ObjectId(courtId) },
       {
         $set: {
-          description,
+          description: descriptionToSave,
           images,
           socialLinks,
           lastUpdated
@@ -54,14 +59,14 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         success: true,
-        description,
+        description: descriptionToSave,
         images,
         socialLinks,
         lastUpdated
       }),
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in enrich-court API:', error);
     return new Response(
       JSON.stringify({ error: error.message }),

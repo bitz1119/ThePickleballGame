@@ -24,7 +24,19 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
       throw new Error(`Tavily API error: ${tavilyResponse.status} - ${errorText}`);
     }
 
-    const tavilyData = await tavilyResponse.json();
+    // Define types for Tavily API response
+    interface TavilyResult {
+      url: string;
+      content: string;
+    }
+
+    interface TavilyResponse {
+      answer?: string;
+      images?: string[];
+      results: TavilyResult[];
+    }
+
+    const tavilyData = await tavilyResponse.json() as TavilyResponse;
     console.log('✅ Tavily data received:', {
       hasAnswer: !!tavilyData.answer,
       imagesCount: tavilyData.images?.length || 0,
@@ -35,7 +47,7 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
     // Process images to ensure they're valid URLs and actually load
     const images = await Promise.all(
       (tavilyData.images || [])
-        .map(async (img) => {
+        .map(async (img: string) => {
           try {
             const url = new URL(img);
             // Check if image actually loads
@@ -47,9 +59,15 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
         })
     ).then(urls => urls.filter(Boolean));
 
+    // Define social link type
+    interface SocialLink {
+      platform: string;
+      url: string;
+    }
+
     // Extract social links from results with better filtering
     const socialLinks = tavilyData.results
-      .filter(result => {
+      .filter((result: TavilyResult) => {
         const url = result.url.toLowerCase();
         // Only match main profile URLs, not individual posts/reels
         return (url.includes('facebook.com/') && !url.includes('/posts/')) || 
@@ -63,7 +81,7 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
                 !url.includes('youtube.com') &&
                 url.toLowerCase().includes(courtName.toLowerCase()));
       })
-      .map(result => {
+      .map((result: TavilyResult) => {
         const url = result.url.toLowerCase();
         let platform = 'Website';
         if (url.includes('facebook.com')) platform = 'Facebook';
@@ -81,8 +99,8 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
         return { platform, url: cleanUrl };
       })
       // Remove duplicates by URL
-      .filter((link, index, self) => 
-        index === self.findIndex((t) => t.url === link.url)
+      .filter((link: SocialLink, index: number, self: SocialLink[]) => 
+        index === self.findIndex((t: SocialLink) => t.url === link.url)
       );
 
     // Enhance description by combining answer and relevant content
@@ -90,7 +108,7 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
     
     // Add relevant information from raw content
     const relevantContent = tavilyData.results
-      .filter(result => {
+      .filter((result: TavilyResult) => {
         // Filter out social media and irrelevant pages
         const url = result.url.toLowerCase();
         return !url.includes('facebook.com') && 
@@ -98,7 +116,7 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
                !url.includes('twitter.com') &&
                !url.includes('youtube.com');
       })
-      .map(result => result.content)
+      .map((result: TavilyResult) => result.content)
       .join('\n\n');
 
     if (relevantContent) {
@@ -118,6 +136,19 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
     
     console.log('🔗 Using API URL:', apiUrl);
     
+    // Ensure description is always a string or proper structure
+    let descriptionToSave;
+    if (typeof enhancedDescription === 'string') {
+      // For backwards compatibility with older format
+      descriptionToSave = enhancedDescription;
+    } else if (enhancedDescription && typeof enhancedDescription === 'object') {
+      // Keep existing object structure if it already has one
+      descriptionToSave = enhancedDescription;
+    } else {
+      // Fallback to empty string
+      descriptionToSave = '';
+    }
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -125,7 +156,7 @@ export async function enrichCourtData(courtId: string, courtName: string, addres
       },
       body: JSON.stringify({
         courtId,
-        description: enhancedDescription,
+        description: descriptionToSave,
         images,
         socialLinks,
         lastUpdated: new Date()
