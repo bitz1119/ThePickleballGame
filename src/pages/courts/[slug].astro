@@ -128,7 +128,46 @@ if (!court.description) {
 }
 
 // Helper function to format description
-function formatDescription(rawDescription: string) {
+function formatDescription(rawDescription: string | any) {
+  // Initialize variables for pros and cons
+  let pros: string[] = [];
+  let cons: string[] = [];
+  
+  // Check if rawDescription is a string, if not convert or return empty object
+  if (typeof rawDescription !== 'string') {
+    console.warn('⚠️ Court description is not a string:', typeof rawDescription);
+    
+    // If it's an object with a content property, use that
+    if (rawDescription && typeof rawDescription === 'object') {
+      console.log('📝 Found description object:', Object.keys(rawDescription));
+      
+      // Extract content
+      const content = rawDescription.content || '';
+      
+      // Extract pros if available
+      if (Array.isArray(rawDescription.pros)) {
+        pros = rawDescription.pros;
+        console.log('✅ Found pros:', pros.length);
+      }
+      
+      // Extract cons if available
+      if (Array.isArray(rawDescription.cons)) {
+        cons = rawDescription.cons;
+        console.log('⚠️ Found cons:', cons.length);
+      }
+      
+      rawDescription = content;
+    } 
+    // If it's an object that might have a toString method, try to use it
+    else if (rawDescription && typeof rawDescription.toString === 'function') {
+      rawDescription = rawDescription.toString();
+    } 
+    // Return default empty structure if we can't convert it
+    else {
+      return { shortDesc: '', fullDesc: '', pros: [], cons: [] };
+    }
+  }
+
   // Split into paragraphs
   const paragraphs = rawDescription.split('\n\n').filter(p => p.trim());
   
@@ -171,7 +210,7 @@ function formatDescription(rawDescription: string) {
   // Get remaining paragraphs as full description
   const fullDesc = uniqueParagraphs.slice(1).join('\n\n');
   
-  return { shortDesc, fullDesc };
+  return { shortDesc, fullDesc, pros, cons };
 }
 
 // Transform data with null checks
@@ -179,7 +218,9 @@ const courtData = {
   title: court.title,
   imageUrl: court.imageUrl || '/images/default-court.jpg',
   images: court.images || [],
-  description: court.description ? formatDescription(court.description) : null,
+  description: court.description 
+    ? formatDescription(court.description) 
+    : null,
   address: court.address,
   state: court.state,
   country: court.countryCode === 'IN' ? 'India' : 'United States',
@@ -343,6 +384,60 @@ console.log('🏁 Final court data:', {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
+                </div>
+              )}
+              
+              {/* Pros and Cons Section */}
+              {((courtData.description.pros && courtData.description.pros.length > 0) || 
+                (courtData.description.cons && courtData.description.cons.length > 0)) && (
+                <div class="mt-6 grid sm:grid-cols-2 gap-6">
+                  {courtData.description.pros && courtData.description.pros.length > 0 && (
+                    <div class="bg-green-50 p-4 rounded-lg">
+                      <h3 class="text-green-700 font-medium mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Pros
+                      </h3>
+                      <ul class="space-y-2">
+                        {courtData.description.pros.map(pro => (
+                          <li class="flex items-start">
+                            <svg class="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" 
+                                 stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>{pro}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {courtData.description.cons && courtData.description.cons.length > 0 && (
+                    <div class="bg-red-50 p-4 rounded-lg">
+                      <h3 class="text-red-700 font-medium mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Cons
+                      </h3>
+                      <ul class="space-y-2">
+                        {courtData.description.cons.map(con => (
+                          <li class="flex items-start">
+                            <svg class="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" 
+                                 stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span>{con}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
