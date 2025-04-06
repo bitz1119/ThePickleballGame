@@ -1,25 +1,17 @@
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
+import vercel from "@astrojs/vercel";
 import react from '@astrojs/react';
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
 import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
 
 // Load environment variables
 dotenv.config();
 
 export default defineConfig({
+  site: "https://the-pickleball-game.vercel.app/",
   output: "server",
-  server: {
-    port: 3000,
-    host: true, // Allow external access
-    https: {
-      cert: fs.readFileSync(path.resolve('.cert/cert.pem')),
-      key: fs.readFileSync(path.resolve('.cert/key.pem'))
-    }
-  },
   integrations: [
     tailwind({
       applyBaseStyles: false,
@@ -32,12 +24,14 @@ export default defineConfig({
       }
     })
   ],
-  vite: {
-    server: {
-      https: {
-        cert: fs.readFileSync(path.resolve('.cert/cert.pem')),
-        key: fs.readFileSync(path.resolve('.cert/key.pem'))
-      }
+  adapter: vercel({
+    webAnalytics: {
+      enabled: true,
+    },
+    environmentVariables: {
+      MONGODB_URI: process.env.MONGODB_URI,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      TAVILY_API_KEY: process.env.TAVILY_API_KEY
     }
-  }
+  })
 });
