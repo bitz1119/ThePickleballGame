@@ -31,10 +31,30 @@ let courts = await db.collection('pickleball_courts')
   .toArray();
 
 // Get unique states and countries for filters
+interface StateAggregation {
+  _id: {
+    state: string;
+    country: string;
+  };
+  count: number;
+}
+
+interface StatesByCountry {
+  [key: string]: string[];
+}
+
 const stateAggregation = await db.collection('pickleball_courts').aggregate([
-  { $group: { _id: "$state", count: { $sum: 1 } } },
+  { 
+    $group: { 
+      _id: { 
+        state: "$state", 
+        country: "$countryCode" 
+      },
+      count: { $sum: 1 } 
+    } 
+  },
   { $sort: { count: -1 } }
-]).toArray();
+]).toArray() as StateAggregation[];
 
 const countryAggregation = await db.collection('pickleball_courts').aggregate([
   { $group: { _id: "$countryCode", count: { $sum: 1 } } }
@@ -63,12 +83,33 @@ const courtsData = courts.map(court => ({
   url: `/courts/${court._id}`
 }));
 
+// Create a mapping of states to their countries
+const statesByCountry: StatesByCountry = {};
+stateAggregation.forEach(item => {
+  if (item._id.state && item._id.country) {
+    const countryName = item._id.country === 'IN' ? 'India' : 'United States';
+    if (!statesByCountry[countryName]) {
+      statesByCountry[countryName] = [];
+    }
+    statesByCountry[countryName].push(item._id.state);
+  }
+});
+
+// Sort states within each country by count
+Object.keys(statesByCountry).forEach(country => {
+  statesByCountry[country].sort((a: string, b: string) => {
+    const countA = stateAggregation.find(s => s._id.state === a)?.count ?? 0;
+    const countB = stateAggregation.find(s => s._id.state === b)?.count ?? 0;
+    return countB - countA;
+  });
+});
+
 const uniqueStates = stateAggregation
-  .map(item => item._id)
+  .map(item => item._id.state)
   .filter((state): state is string => Boolean(state))
   .sort((a, b) => {
-    const countA = stateAggregation.find(s => s._id === a)?.count ?? 0;
-    const countB = stateAggregation.find(s => s._id === b)?.count ?? 0;
+    const countA = stateAggregation.find(s => s._id.state === a)?.count ?? 0;
+    const countB = stateAggregation.find(s => s._id.state === b)?.count ?? 0;
     return countB - countA;
   });
 
@@ -95,7 +136,8 @@ const initialData = {
   totalCourts,
   totalPages,
   currentPage: initialPage,
-  googleMapsApiKey: GOOGLE_MAPS_API_KEY
+  googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+  statesByCountry
 };
 ---
 
@@ -177,8 +219,8 @@ const initialData = {
 
   // Constants and DOM elements
   const loadingOverlay = document.getElementById('loadingOverlay');
-  const stateFilter = document.getElementById('stateFilter');
-  const countryFilter = document.getElementById('countryFilter');
+  const stateFilter = /** @type {HTMLSelectElement} */ (document.getElementById('stateFilter'));
+  const countryFilter = /** @type {HTMLSelectElement} */ (document.getElementById('countryFilter'));
   const searchInput = document.getElementById('searchInput');
   const resetButton = document.getElementById('resetFilters');
   const courtsGrid = document.getElementById('courtsGrid');
@@ -655,14 +697,54 @@ const initialData = {
     }
   });
 
+  // Function to update state options based on selected country
+  function updateStateOptions(selectedCountry) {
+    if (!stateFilter) return;
+
+    // Store current selection if any
+    const currentSelection = stateFilter.value;
+
+    // Clear existing options except "All States/Regions"
+    while (stateFilter.options.length > 1) {
+      stateFilter.remove(1);
+    }
+
+    // If "all" is selected or no states for country, show all states
+    if (selectedCountry === 'all') {
+      Object.values(initialData.statesByCountry).flat().forEach(state => {
+        const option = new Option(state, state);
+        stateFilter.add(option);
+      });
+    } else {
+      // Add only states for selected country
+      const countryStates = initialData.statesByCountry[selectedCountry] || [];
+      countryStates.forEach(state => {
+        const option = new Option(state, state);
+        stateFilter.add(option);
+      });
+    }
+
+    // Try to restore previous selection if it exists in new options
+    const hasOldSelection = Array.from(stateFilter.options).some(option => option.value === currentSelection);
+    stateFilter.value = hasOldSelection ? currentSelection : 'all';
+  }
+
   // Event listeners
+  countryFilter?.addEventListener('change', (e) => {
+    const selectedCountry = /** @type {HTMLSelectElement} */ (e.target).value;
+    updateStateOptions(selectedCountry);
+    filterCourts();
+  });
+
   stateFilter?.addEventListener('change', filterCourts);
-  countryFilter?.addEventListener('change', filterCourts);
   
   resetButton?.addEventListener('click', () => {
     if (stateFilter) stateFilter.value = 'all';
     if (countryFilter) countryFilter.value = 'all';
     if (searchInput) searchInput.value = '';
+    
+    // Update state options to show all states
+    updateStateOptions('all');
     
     const dynamicTitle = document.getElementById('dynamicTitle');
     const locationTitle = document.getElementById('locationTitle');
@@ -675,6 +757,9 @@ const initialData = {
     currentPage = 1;
     filterCourts();
   });
+
+  // Initialize state options with all states
+  updateStateOptions('all');
 
   // Near Me functionality
   if (nearMeButton) {

@@ -1,4 +1,3 @@
-
 import type { APIRoute } from 'astro';
 import clientPromise from '../../lib/mongodb';
 
@@ -24,7 +23,12 @@ export const GET: APIRoute = async ({ request }) => {
     }
     
     if (country && country !== 'all' && country !== 'undefined') {
-      query.countryCode = country === 'India' ? 'IN' : country === 'United States' ? 'US' : country;
+      // Map country names to country codes
+      const countryCodeMap = {
+        'India': 'IN',
+        'United States': 'US'
+      };
+      query.countryCode = countryCodeMap[country] || country;
     }
     
     if (search && search !== 'undefined') {
