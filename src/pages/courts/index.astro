@@ -95,23 +95,15 @@ stateAggregation.forEach(item => {
   }
 });
 
-// Sort states within each country by count
+// Sort states alphabetically within each country
 Object.keys(statesByCountry).forEach(country => {
-  statesByCountry[country].sort((a: string, b: string) => {
-    const countA = stateAggregation.find(s => s._id.state === a)?.count ?? 0;
-    const countB = stateAggregation.find(s => s._id.state === b)?.count ?? 0;
-    return countB - countA;
-  });
+  statesByCountry[country].sort((a: string, b: string) => a.localeCompare(b));
 });
 
 const uniqueStates = stateAggregation
   .map(item => item._id.state)
   .filter((state): state is string => Boolean(state))
-  .sort((a, b) => {
-    const countA = stateAggregation.find(s => s._id.state === a)?.count ?? 0;
-    const countB = stateAggregation.find(s => s._id.state === b)?.count ?? 0;
-    return countB - countA;
-  });
+  .sort((a, b) => a.localeCompare(b));
 
 interface CountryInfo {
   code: string;
@@ -434,14 +426,18 @@ const initialData = {
       const filters = {};
       let locationText = '';
 
-      // Only add filters if they're not 'all'
-      if (selectedState && selectedState !== 'all') {
-        filters.state = selectedState;
-        locationText = selectedState;
-      }
+      // Build location text based on selected filters
       if (selectedCountry && selectedCountry !== 'all') {
         filters.country = selectedCountry;
         locationText = selectedCountry;
+        
+        if (selectedState && selectedState !== 'all') {
+          filters.state = selectedState;
+          locationText = `${selectedCountry}, ${selectedState}`;
+        }
+      } else if (selectedState && selectedState !== 'all') {
+        filters.state = selectedState;
+        locationText = selectedState;
       }
 
       // Update title based on filter selection
