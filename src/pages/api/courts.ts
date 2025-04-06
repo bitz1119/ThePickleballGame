@@ -1,8 +1,8 @@
-
 import type { APIRoute } from 'astro';
 import clientPromise from '../../lib/mongodb';
 
 const ITEMS_PER_PAGE = 9;
+const MAX_DISTANCE_KM = 50; // Maximum radius to search in kilometers
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -12,23 +12,43 @@ export const GET: APIRoute = async ({ request }) => {
     const state = url.searchParams.get('state');
     const country = url.searchParams.get('country');
     const search = url.searchParams.get('search');
+    const lat = parseFloat(url.searchParams.get('lat') || '');
+    const lng = parseFloat(url.searchParams.get('lng') || '');
 
-    console.log('📝 Raw query params:', { page, state, country, search });
+    console.log('📝 Raw query params:', { page, state, country, search, lat, lng });
 
     // Build query
     const query: Record<string, any> = {};
 
-    // Only add parameters if they are valid and not 'all'
-    if (state && state !== 'all' && state !== 'undefined') {
-      query.state = state;
-    }
-    
-    if (country && country !== 'all' && country !== 'undefined') {
-      query.countryCode = country === 'India' ? 'IN' : country === 'United States' ? 'US' : country;
-    }
-    
-    if (search && search !== 'undefined') {
-      query.title = { $regex: search, $options: 'i' };
+    // Add geospatial query if coordinates are provided
+    if (!isNaN(lat) && !isNaN(lng)) {
+      query.location = {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [lng, lat] // MongoDB uses [longitude, latitude] order
+          },
+          $maxDistance: MAX_DISTANCE_KM * 1000 // Convert km to meters
+        }
+      };
+    } else {
+      // Only add other filters if not doing geospatial search
+      if (state && state !== 'all' && state !== 'undefined') {
+        query.state = state;
+      }
+      
+      if (country && country !== 'all' && country !== 'undefined') {
+        // Map country names to country codes
+        const countryCodeMap = {
+          'India': 'IN',
+          'United States': 'US'
+        };
+        query.countryCode = countryCodeMap[country as keyof typeof countryCodeMap] || country;
+      }
+      
+      if (search && search !== 'undefined') {
+        query.title = { $regex: search, $options: 'i' };
+      }
     }
 
     console.log('🔍 MongoDB query:', JSON.stringify(query, null, 2));
@@ -38,6 +58,13 @@ export const GET: APIRoute = async ({ request }) => {
     const client = await clientPromise;
     const db = client.db('google_maps_data');
     console.log('✅ Connected to MongoDB');
+
+    // Create geospatial index if it doesn't exist
+    try {
+      await db.collection('pickleball_courts').createIndex({ location: "2dsphere" });
+    } catch (error) {
+      console.warn('Warning: Could not create geospatial index', error);
+    }
 
     // Get total count for pagination
     const totalCourts = await db.collection('pickleball_courts').countDocuments(query);
@@ -50,13 +77,27 @@ export const GET: APIRoute = async ({ request }) => {
     const skip = (page - 1) * ITEMS_PER_PAGE;
     console.log('⏭️ Skipping:', skip, 'courts');
 
-    const courts = await db.collection('pickleball_courts')
+    let courts = await db.collection('pickleball_courts')
       .find(query)
       .skip(skip)
       .limit(ITEMS_PER_PAGE)
       .toArray();
 
-    console.log(`📚 Found ${courts.length} courts for page ${page}`);
+    // If doing geospatial search, calculate and add distance to each court
+    if (!isNaN(lat) && !isNaN(lng)) {
+      courts = courts.map(court => {
+        if (court.location) {
+          const distance = calculateDistance(
+            lat, 
+            lng, 
+            court.location.lat || court.location.coordinates[1],
+            court.location.lng || court.location.coordinates[0]
+          );
+          return { ...court, distance };
+        }
+        return court;
+      });
+    }
 
     // Transform courts data
     const courtsData = courts.map(court => ({
@@ -78,7 +119,8 @@ export const GET: APIRoute = async ({ request }) => {
       amenities: court.additionalInfo?.Amenities || [],
       capacity: court.capacity || null,
       lastUpdated: court.lastUpdated || null,
-      url: `/courts/${court._id}`
+      url: `/courts/${court._id}`,
+      distance: court.distance // Add distance if available
     }));
 
     console.log('✨ Transformed courts data');
@@ -111,4 +153,21 @@ export const GET: APIRoute = async ({ request }) => {
       }
     });
   }
-}; 
+};
+
+// Calculate distance between two points using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
+}
+
+function toRad(degrees: number): number {
+  return degrees * (Math.PI/180);
+} 

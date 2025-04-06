@@ -3,86 +3,159 @@ import { useState, useEffect } from 'react';
 interface LocationState {
   latitude: number | null;
   longitude: number | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
+  accuracy: number | null;
   loading: boolean;
   error: string | null;
 }
 
-const useLocation = () => {
+interface LocationOptions {
+  enableHighAccuracy?: boolean;
+  timeout?: number;
+  maximumAge?: number;
+}
+
+const useLocation = (options: LocationOptions = {}) => {
   const [location, setLocation] = useState<LocationState>({
     latitude: null,
     longitude: null,
-    city: null,
-    state: null,
-    country: null,
+    accuracy: null,
     loading: true,
     error: null,
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const getLocation = async () => {
       try {
-        // Get user's coordinates
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-
-        const { latitude, longitude } = position.coords;
-
-        // Use Google's Geocoding API to get location details
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.GOOGLE_MAPS_API_KEY}`
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch location details');
-        }
-
-        const data = await response.json();
-
-        if (data.status !== 'OK') {
-          throw new Error('Geocoding API error');
-        }
-
-        // Extract city, state, and country from address components
-        let city = null;
-        let state = null;
-        let country = null;
-
-        data.results[0].address_components.forEach((component: any) => {
-          if (component.types.includes('locality')) {
-            city = component.long_name;
-          }
-          if (component.types.includes('administrative_area_level_1')) {
-            state = component.long_name;
-          }
-          if (component.types.includes('country')) {
-            country = component.long_name;
-          }
-        });
-
-        setLocation({
-          latitude,
-          longitude,
-          city,
-          state,
-          country,
-          loading: false,
-          error: null,
-        });
+        // Try multiple location services in sequence
+        await tryGeolocationServices(isMounted);
       } catch (error) {
-        setLocation(prev => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Failed to get location',
-        }));
+        if (isMounted) {
+          setLocation(prev => ({
+            ...prev,
+            loading: false,
+            error: error instanceof Error ? error.message : 'Failed to get location',
+          }));
+        }
       }
     };
 
+    const tryGeolocationServices = async (isMounted: boolean) => {
+      // First try: High accuracy GPS
+      try {
+        const position = await getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+          ...options,
+        });
+
+        if (isMounted) {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+      } catch (error) {
+        console.log('High accuracy location failed, trying low accuracy...');
+      }
+
+      // Second try: Low accuracy
+      try {
+        const position = await getCurrentPosition({
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 60000,
+          ...options,
+        });
+
+        if (isMounted) {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+      } catch (error) {
+        console.log('Low accuracy location failed, trying alternative services...');
+      }
+
+      // Third try: OpenStreetMap Nominatim (IP-based)
+      try {
+        const response = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=me', {
+          headers: {
+            'User-Agent': 'PickleballCourts/1.0'
+          }
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch location from OpenStreetMap');
+        
+        const data = await response.json();
+        if (data && data[0]) {
+          if (isMounted) {
+            setLocation({
+              latitude: parseFloat(data[0].lat),
+              longitude: parseFloat(data[0].lon),
+              accuracy: 5000, // Approximate accuracy for IP-based location
+              loading: false,
+              error: null,
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('OpenStreetMap location failed, trying next service...');
+      }
+
+      // Fourth try: Abstract API (IP-based, free tier)
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        if (!response.ok) throw new Error('Failed to fetch location from IP API');
+        
+        const data = await response.json();
+        if (data && data.latitude && data.longitude) {
+          if (isMounted) {
+            setLocation({
+              latitude: data.latitude,
+              longitude: data.longitude,
+              accuracy: 5000, // Approximate accuracy for IP-based location
+              loading: false,
+              error: null,
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('IP API location failed');
+        throw new Error('Unable to determine your location. Please check your internet connection and try again.');
+      }
+    };
+
+    const getCurrentPosition = (positionOptions: PositionOptions): Promise<GeolocationPosition> => {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Geolocation is not supported by your browser'));
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(resolve, reject, positionOptions);
+      });
+    };
+
     getLocation();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [options.enableHighAccuracy, options.timeout, options.maximumAge]);
 
   return location;
 };
