@@ -24,11 +24,13 @@ const totalPages = Math.ceil(totalCourts / ITEMS_PER_PAGE);
 const initialPage = 1;
 const skip = (initialPage - 1) * ITEMS_PER_PAGE;
 
-let courts = await db.collection('pickleball_courts')
+// Get ALL courts for client-side filtering
+let allCourts = await db.collection('pickleball_courts')
   .find({})
-  .skip(skip)
-  .limit(ITEMS_PER_PAGE)
   .toArray();
+
+// Get paginated courts for initial display
+let courts = allCourts.slice(skip, skip + ITEMS_PER_PAGE);
 
 // Get unique states and countries for filters
 interface StateAggregation {
@@ -80,7 +82,32 @@ const courtsData = courts.map(court => ({
   amenities: court.additionalInfo?.Amenities || [],
   capacity: court.capacity || null,
   lastUpdated: court.lastUpdated || null,
-  url: `/courts/${court._id}`
+  url: `/courts/${court._id}`,
+  location: court.location || null // Add location data
+}));
+
+// Transform ALL courts for filtering
+const allCourtsData = allCourts.map(court => ({
+  id: court._id.toString(),
+  slug: court.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+  title: court.title,
+  state: court.state,
+  countryCode: court.countryCode,
+  imageUrl: court.images?.[0] || court.imageUrl || '/images/default-court.jpg',
+  images: court.images || [],
+  description: court.description,
+  address: court.address,
+  totalScore: court.totalScore || 4.0,
+  rating: court.totalScore || 4.0,
+  reviewsCount: court.reviewsCount || 0,
+  categories: court.categories || ['Pickleball Court'],
+  openingHours: court.openingHours || [],
+  socialLinks: court.socialLinks || [],
+  amenities: court.additionalInfo?.Amenities || [],
+  capacity: court.capacity || null,
+  lastUpdated: court.lastUpdated || null,
+  url: `/courts/${court._id}`,
+  location: court.location || null // Add location data
 }));
 
 // Create a mapping of states to their countries
@@ -125,6 +152,7 @@ const uniqueCountries = countryAggregation
 // Pass initial data to the client
 const initialData = {
   courts: courtsData,
+  allCourts: allCourtsData, // Add all courts data
   totalCourts,
   totalPages,
   currentPage: initialPage,
@@ -762,9 +790,11 @@ const initialData = {
     nearMeButton.addEventListener('click', async () => {
       try {
         showLoading();
+        console.log('🔍 Near Me button clicked');
         
         // First check if geolocation is supported
         if (!navigator.geolocation) {
+          console.error('❌ Geolocation not supported');
           throw new Error('Your device or browser does not support location services. Please try on a device with GPS or use the search filters instead.');
         }
 
@@ -776,14 +806,16 @@ const initialData = {
                           location.hostname.startsWith('172.');
 
         if (location.protocol !== 'https:' && !isLocalhost) {
+          console.error('❌ Not HTTPS:', location.protocol);
           throw new Error('For security reasons, location services require a secure HTTPS connection. Please access this site via HTTPS.');
         }
 
         // Check current permission state
         const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-        console.log('Current permission state:', permissionStatus.state);
+        console.log('📍 Current permission state:', permissionStatus.state);
 
         if (permissionStatus.state === 'denied') {
+          console.error('❌ Location permission denied');
           throw new Error(`Location access is blocked. Please follow these steps to enable it:
 1. Click the site settings icon (🔒) in your browser's address bar
 2. Find "Location" in the permissions list
@@ -791,136 +823,209 @@ const initialData = {
 4. Refresh the page and try again`);
         }
 
-        // If permission is prompt or granted, request location
+        // Get user's position with detailed logging
         const position = await new Promise((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            reject(new Error('Location request timed out. Please check your connection and try again.'));
-          }, 30000); // 30 second timeout
+          console.log('📍 Requesting user location...');
+          
+          // Show a loading message while getting location
+          if (locationName) {
+            locationName.textContent = 'Getting your location...';
+          }
 
-          // Watch for permission changes
-          permissionStatus.addEventListener('change', () => {
-            console.log('Permission state changed to:', permissionStatus.state);
-            if (permissionStatus.state === 'denied') {
-              clearTimeout(timeoutId);
-              reject(new Error('Location access was denied. Please enable it in your browser settings and try again.'));
-            }
-          });
+          let hasResolved = false;
 
-          // Request position with browser's native dialog
+          const handleSuccess = (position) => {
+            if (hasResolved) return;
+            hasResolved = true;
+            console.log('✅ Got user location:', {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            });
+            resolve(position);
+          };
+
+          const handleError = (error) => {
+            if (hasResolved) return;
+            hasResolved = true;
+            console.error('❌ Geolocation error:', {
+              code: error.code,
+              message: error.message
+            });
+            reject(error);
+          };
+
+          // Try with high accuracy first
+          const highAccuracyOptions = {
+            enableHighAccuracy: true,
+            timeout: 20000, // 20 seconds for high accuracy
+            maximumAge: 0
+          };
+
+          // Then fall back to low accuracy
+          const lowAccuracyOptions = {
+            enableHighAccuracy: false,
+            timeout: 15000, // 15 seconds for low accuracy
+            maximumAge: 60000 // Accept 1-minute old cached positions
+          };
+
+          // Start both requests
           navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              clearTimeout(timeoutId);
-              resolve(pos);
+            handleSuccess,
+            () => {
+              console.log('⚠️ High accuracy failed, trying with low accuracy...');
+              navigator.geolocation.getCurrentPosition(
+                handleSuccess,
+                handleError,
+                lowAccuracyOptions
+              );
             },
-            (error) => {
-              clearTimeout(timeoutId);
-              switch(error.code) {
-                case error.PERMISSION_DENIED:
-                  reject(new Error(`Location access was denied. Please follow these steps:
-1. Click the site settings icon (🔒) in your browser's address bar
-2. Find "Location" in the permissions list
-3. Change the setting to "Allow"
-4. Refresh the page and try again`));
-                  break;
-                case error.POSITION_UNAVAILABLE:
-                  reject(new Error(`Unable to detect your location. Please try:
-1. Enabling GPS if you're on mobile
-2. Checking your device's location services
-3. Using a device with GPS capabilities
-4. Using the search filters instead`));
-                  break;
-                case error.TIMEOUT:
-                  reject(new Error('Location request timed out. Please check your internet connection and try again.'));
-                  break;
-                default:
-                  reject(new Error(`Location error: ${error.message}`));
-              }
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 30000,
-              maximumAge: 0
-            }
+            highAccuracyOptions
           );
         });
 
-        const coords = position.coords;
-        const { latitude, longitude } = coords;
-        console.log('📍 Your coordinates:', { latitude, longitude });
+        const { latitude, longitude } = position.coords;
+        console.log('📍 User coordinates:', { latitude, longitude });
 
-        // Get location name using reverse geocoding
+        // Calculate distance between two points using Haversine formula
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+          const R = 6371; // Earth's radius in kilometers
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          return R * c; // Distance in kilometers
+        }
+
+        // Filter courts by distance
+        console.log('🔄 Filtering courts by distance...');
+        const MAX_DISTANCE = 50; // Maximum distance in kilometers
+        
+        // Get all courts from the initial data
+        const allCourts = initialData.allCourts;
+        console.log('📊 Total courts to filter:', allCourts.length);
+
+        const courtsWithDistance = allCourts
+          .map(court => {
+            if (court.location && court.location.lat && court.location.lng) {
+              const distance = calculateDistance(
+                latitude,
+                longitude,
+                court.location.lat,
+                court.location.lng
+              );
+              return { ...court, distance };
+            }
+            return null;
+          })
+          .filter(court => court !== null && court.distance <= MAX_DISTANCE)
+          .sort((a, b) => a.distance - b.distance);
+
+        console.log('📊 Found nearby courts:', courtsWithDistance.length);
+
+        // Update the filtered courts with pagination
+        const totalNearbyCourts = courtsWithDistance.length;
+        const totalNearbyPages = Math.ceil(totalNearbyCourts / ITEMS_PER_PAGE);
+        currentPage = 1;
+        currentTotalPages = totalNearbyPages;
+
+        // Get courts for first page
+        filteredCourts = courtsWithDistance.slice(0, ITEMS_PER_PAGE);
+
+        // Try to get location name from Google Maps API
         try {
-          const geocodeResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleMapsApiKey}`);
-          const geocodeData = await geocodeResponse.json();
+          console.log('🔄 Getting location details from Google Maps...');
+          if (!googleMapsApiKey) {
+            throw new Error('Google Maps API key is not configured');
+          }
+          const geocodeResponse = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleMapsApiKey}`
+          );
           
-          if (geocodeData.results && geocodeData.results.length > 0) {
+          const geocodeData = await geocodeResponse.json();
+          console.log('📍 Geocoding response:', geocodeData);
+          
+          if (geocodeData.status === 'OK' && geocodeData.results && geocodeData.results.length > 0) {
             const locationDetails = geocodeData.results[0];
-            console.log('📍 Location details:', locationDetails);
-            
-            // Find city and state from address components
             let city = '';
             let state = '';
-            let country = '';
             
             locationDetails.address_components.forEach((component) => {
               if (component.types.includes('locality')) {
                 city = component.long_name;
               } else if (component.types.includes('administrative_area_level_1')) {
                 state = component.long_name;
-              } else if (component.types.includes('country')) {
-                country = component.long_name;
               }
             });
 
-            const locationText = [city, state, country].filter(Boolean).join(', ');
-            console.log('📍 Formatted location:', locationText);
-
-            // Update UI with location
+            // Update location title
             if (dynamicTitle) dynamicTitle.classList.add('hidden');
             if (locationTitle) locationTitle.classList.remove('hidden');
             if (locationName) {
-              locationName.textContent = locationText || `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+              const locationText = city ? `${city}${state ? `, ${state}` : ''}` : 'Near Your Location';
+              locationName.textContent = locationText;
             }
           } else {
-            // If no results from geocoding, show coordinates
+            console.log('⚠️ Could not get location details, using default text');
+            if (dynamicTitle) dynamicTitle.classList.add('hidden');
+            if (locationTitle) locationTitle.classList.remove('hidden');
             if (locationName) {
-              locationName.textContent = `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+              locationName.textContent = 'Near Your Location';
             }
           }
         } catch (error) {
-          console.error('Error getting location name:', error);
-          // Fallback to showing coordinates
+          console.error('❌ Error getting location details:', error);
+          if (dynamicTitle) dynamicTitle.classList.add('hidden');
+          if (locationTitle) locationTitle.classList.remove('hidden');
           if (locationName) {
-            locationName.textContent = `Near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            locationName.textContent = 'Near Your Location';
           }
         }
 
-        // Update UI to show loading state
-        if (dynamicTitle) dynamicTitle.classList.add('hidden');
-        if (locationTitle) locationTitle.classList.remove('hidden');
-        if (locationName) locationName.textContent = 'Finding nearby courts...';
-
-        // Fetch nearby courts
-        const response = await fetch(`/api/courts?lat=${latitude}&lng=${longitude}`);
-        if (!response.ok) throw new Error('Failed to fetch nearby courts');
-        
-        const data = await response.json();
-        filteredCourts = data.courts;
-
-        // Update location name
-        if (locationName) {
-          locationName.textContent = 'Near Your Location';
-        }
+        // Reset filters
+        if (stateFilter) stateFilter.value = 'all';
+        if (countryFilter) countryFilter.value = 'all';
+        if (searchInput) searchInput.value = '';
 
         // Update display
+        if (visibleCount) {
+          visibleCount.textContent = Math.min(ITEMS_PER_PAGE, totalNearbyCourts).toString();
+        }
+        if (totalCountElem) {
+          totalCountElem.textContent = totalNearbyCourts.toString();
+        }
+
+        // Store all nearby courts for pagination
+        const allNearbyCourts = courtsWithDistance;
+
+        // Update pagination handler for nearby courts
+        const originalChangePage = changePage;
+        changePage = async (newPage) => {
+          if (newPage === currentPage) return;
+          currentPage = newPage;
+          
+          const start = (currentPage - 1) * ITEMS_PER_PAGE;
+          const end = start + ITEMS_PER_PAGE;
+          filteredCourts = allNearbyCourts.slice(start, end);
+          
+          if (visibleCount) {
+            visibleCount.textContent = Math.min(ITEMS_PER_PAGE, allNearbyCourts.length - start).toString();
+          }
+          
+          displayCurrentPage();
+          updatePagination();
+        };
+
         displayCurrentPage();
         updatePagination();
 
       } catch (error) {
-        console.error('Error getting location:', error);
+        console.error('❌ Error in Near Me functionality:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         
-        // Create a more user-friendly error dialog
         const errorDialog = document.createElement('div');
         errorDialog.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center';
         errorDialog.innerHTML = `
@@ -933,6 +1038,16 @@ const initialData = {
             </div>
             <div class="text-gray-600 space-y-4">
               <p>${errorMessage}</p>
+              ${error.message.includes('timeout') ? `
+                <p class="mt-2 text-sm">
+                  Tips:
+                  <ul class="list-disc pl-5 mt-1">
+                    <li>Make sure your GPS is enabled</li>
+                    <li>Try moving to an area with better GPS signal</li>
+                    <li>Allow a few more seconds for GPS to get accurate location</li>
+                  </ul>
+                </p>
+              ` : ''}
             </div>
             <div class="mt-6 flex justify-end">
               <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200" onclick="this.parentElement.parentElement.parentElement.remove()">
