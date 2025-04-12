@@ -46,9 +46,22 @@ const { title, categories = blogCategories } = Astro.props;
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #10316B;
+      --secondary: #0B8457;
+      --accent: #EAC100;
+      --neutral: #DEE1EC;
+      --dark: #333333;
+      --light: #F5F5F5;
+      --success: #4CAF50;
+      --info: #2196F3;
+      --warning: #FFEB3B;
+    }
+  </style>
   </head>
-  <body class="bg-gradient-to-br bg-[#1E1E1E] text-gray-100 min-h-screen">
-    <header class="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
+  <body class="bg-gradient-to-br from-[#DEE1EC] to-[#F5F5F5] text-[#333333] min-h-screen">
+    <header class="bg-gradient-to-r from-[#10316B] via-[#0B8457] to-[#2196F3]">
       <nav class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
         <!-- Logo or Title -->
         <div class="flex items-center">
@@ -77,7 +90,7 @@ const { title, categories = blogCategories } = Astro.props;
       <slot />
     </main>
     
-    <footer class="bg-[#1E1E1E] text-white py-8">
+    <footer class="bg-[#10316B] text-white py-8">
       <div
         class="container mx-auto text-center grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4"
       >
@@ -143,7 +156,7 @@ const { title, categories = blogCategories } = Astro.props;
         </div>
       </div>
       <div class="max-w-6xl mx-auto px-4 py-6 text-center">
-        <p>
+        <p class="text-[#DEE1EC]">
           &copy; {new Date().getFullYear()} Pickleball Guide. All rights reserved.
         </p>
       </div>

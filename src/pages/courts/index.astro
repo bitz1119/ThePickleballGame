@@ -65,7 +65,7 @@ const countryAggregation = await db.collection('pickleball_courts').aggregate([
 // Transform initial courts data
 const courtsData = courts.map(court => ({
   id: court._id.toString(),
-  slug: court.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+  slug: court._id.toString(),
   title: court.title,
   state: court.state,
   countryCode: court.countryCode,
@@ -83,7 +83,7 @@ const courtsData = courts.map(court => ({
   capacity: court.capacity || null,
   lastUpdated: court.lastUpdated || null,
   url: `/courts/${court._id}`,
-  location: court.location || null // Add location data
+  location: court.location || null
 }));
 
 // Transform ALL courts for filtering
@@ -107,7 +107,7 @@ const allCourtsData = allCourts.map(court => ({
   capacity: court.capacity || null,
   lastUpdated: court.lastUpdated || null,
   url: `/courts/${court._id}`,
-  location: court.location || null // Add location data
+  location: court.location || null
 }));
 
 // Create a mapping of states to their countries
@@ -166,8 +166,8 @@ const initialData = {
 
   <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="text-center mb-12">
-      <h1 class="text-4xl font-bold text-white mb-2">Find Pickleball Courts</h1>
-      <p class="text-lg text-white/70">Discover places to play near you</p>
+      <h1 class="text-4xl font-bold text-black mb-2">Find Pickleball Courts</h1>
+      <p class="text-lg text-black/70">Discover places to play near you</p>
     </div>
 
     <SearchFilters uniqueStates={uniqueStates} uniqueCountries={uniqueCountries} />
@@ -175,14 +175,14 @@ const initialData = {
     <!-- Dynamic Title Section -->
     <div id="dynamicTitle" class="mb-12 text-center h-16">
       <div class="space-y-8">
-        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-black">
           <TypewriterText
             client:load
             text={["Start Your Game – Find a Court", "Where Do You Want to Play?", "Find the Perfect Court"]}
             speed={70}
             deleteSpeed={50}
             delay={1500}
-            className="text-white"
+            className="text-black"
             loop={true}
             cursor={true}
           />
@@ -192,12 +192,12 @@ const initialData = {
 
     <!-- Location-based Title -->
     <div id="locationTitle" class="mb-12 text-center hidden">
-      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-black">
         <Typewriter
           client:load
           text="Here Are Courts in"
           speed={70}
-          className="text-white"
+          className="text-black"
           cursorChar={"→"}
         />
         <span id="locationName" class="text-yellow-400"></span>
@@ -534,7 +534,7 @@ const initialData = {
           data-name="${court.title.toLowerCase()}"
           style="animation: fadeIn 0.6s ease-out ${index * 0.1}s both;"
         >
-          <a href="/courts/${court.slug}" class="block">
+          <a href="/courts/${court.id}" class="block">
             <div class="relative overflow-hidden group h-64">
               <img 
                 src="${court.imageUrl}" 
@@ -583,7 +583,7 @@ const initialData = {
 
             <div class="flex justify-between items-center mt-6 gap-4 pt-4 border-t border-gray-100">
               <a 
-                href="/courts/${court.slug}"
+                href="/courts/${court.id}"
                 class="group flex items-center text-pink-600 hover:text-pink-700 font-medium"
               >
                 View details
