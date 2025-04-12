@@ -166,8 +166,8 @@ const initialData = {
 
   <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="text-center mb-12">
-      <h1 class="text-4xl font-bold text-white mb-2">Find Pickleball Courts</h1>
-      <p class="text-lg text-white/70">Discover places to play near you</p>
+      <h1 class="text-4xl font-bold text-black mb-2">Find Pickleball Courts</h1>
+      <p class="text-lg text-black/70">Discover places to play near you</p>
     </div>
 
     <SearchFilters uniqueStates={uniqueStates} uniqueCountries={uniqueCountries} />
@@ -175,14 +175,14 @@ const initialData = {
     <!-- Dynamic Title Section -->
     <div id="dynamicTitle" class="mb-12 text-center h-16">
       <div class="space-y-8">
-        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-black">
           <TypewriterText
             client:load
             text={["Start Your Game – Find a Court", "Where Do You Want to Play?", "Find the Perfect Court"]}
             speed={70}
             deleteSpeed={50}
             delay={1500}
-            className="text-white"
+            className="text-black"
             loop={true}
             cursor={true}
           />
@@ -192,12 +192,12 @@ const initialData = {
 
     <!-- Location-based Title -->
     <div id="locationTitle" class="mb-12 text-center hidden">
-      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-black">
         <Typewriter
           client:load
           text="Here Are Courts in"
           speed={70}
-          className="text-white"
+          className="text-black"
           cursorChar={"→"}
         />
         <span id="locationName" class="text-yellow-400"></span>
