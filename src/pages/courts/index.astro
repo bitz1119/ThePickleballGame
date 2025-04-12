@@ -65,7 +65,7 @@ const countryAggregation = await db.collection('pickleball_courts').aggregate([
 // Transform initial courts data
 const courtsData = courts.map(court => ({
   id: court._id.toString(),
-  slug: court.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+  slug: court._id.toString(),
   title: court.title,
   state: court.state,
   countryCode: court.countryCode,
@@ -83,7 +83,7 @@ const courtsData = courts.map(court => ({
   capacity: court.capacity || null,
   lastUpdated: court.lastUpdated || null,
   url: `/courts/${court._id}`,
-  location: court.location || null // Add location data
+  location: court.location || null
 }));
 
 // Transform ALL courts for filtering
@@ -107,7 +107,7 @@ const allCourtsData = allCourts.map(court => ({
   capacity: court.capacity || null,
   lastUpdated: court.lastUpdated || null,
   url: `/courts/${court._id}`,
-  location: court.location || null // Add location data
+  location: court.location || null
 }));
 
 // Create a mapping of states to their countries
@@ -534,7 +534,7 @@ const initialData = {
           data-name="${court.title.toLowerCase()}"
           style="animation: fadeIn 0.6s ease-out ${index * 0.1}s both;"
         >
-          <a href="/courts/${court.slug}" class="block">
+          <a href="/courts/${court.id}" class="block">
             <div class="relative overflow-hidden group h-64">
               <img 
                 src="${court.imageUrl}" 
@@ -583,7 +583,7 @@ const initialData = {
 
             <div class="flex justify-between items-center mt-6 gap-4 pt-4 border-t border-gray-100">
               <a 
-                href="/courts/${court.slug}"
+                href="/courts/${court.id}"
                 class="group flex items-center text-pink-600 hover:text-pink-700 font-medium"
               >
                 View details

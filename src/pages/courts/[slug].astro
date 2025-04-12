@@ -6,7 +6,7 @@ import { ObjectId } from 'mongodb';
 import { BSONError } from 'bson';
 
 const { slug } = Astro.params;
-console.log('🎾 Loading court details for slug:', slug);
+console.log('🎾 Loading court details for ID:', slug);
 
 // Connect to MongoDB
 const client = await clientPromise;
@@ -15,72 +15,34 @@ const db = client.db('google_maps_data');
 // Try to find existing court
 let court;
 try {
-  // First try to find by ObjectId if the slug is a valid ObjectId
+  // Try to find by ObjectId
   if (ObjectId.isValid(slug)) {
     court = await db.collection('pickleball_courts').findOne({
       _id: new ObjectId(slug)
     });
   }
   
-  // If not found by ObjectId, try to find by title
+  // If not found by ObjectId, try to find by title as fallback
   if (!court) {
+    console.log('⚠️ Court not found by ID, trying title match...');
+    const title = slug.replace(/-/g, ' ');
     court = await db.collection('pickleball_courts').findOne({
       title: { 
-        $regex: new RegExp(slug.replace(/-/g, ' '), 'i') 
+        $regex: new RegExp(`^${title}$`, 'i') 
       } 
     });
   }
 } catch (error) {
   console.error('❌ Error finding court:', error);
-    }
+}
 
-// If court doesn't exist, try to generate it
+// If court doesn't exist, return 404
 if (!court) {
-  console.log('🔄 Court not found, attempting to generate from slug...');
-  const courtTitle = slug.replace(/-/g, ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-
-  // Generate court data using Tavily
-  const enrichedData = await enrichCourtData(
-    new ObjectId().toString(), // Generate a new ObjectId
-    courtTitle,
-    '' // No address yet
-  );
-
-  if (enrichedData) {
-    console.log('✨ Generated new court data from Tavily');
-    
-    // Create new court document
-    const newId = new ObjectId();
-    court = {
-      _id: newId,
-      title: courtTitle,
-      description: enrichedData.description,
-      images: enrichedData.images || [],
-      socialLinks: enrichedData.socialLinks || [],
-      lastUpdated: new Date(),
-      // Default values for required fields
-      totalScore: 4.0,
-      reviewsCount: 0,
-      categories: ['Pickleball Court']
-    };
-
-    try {
-      // Insert the new court into MongoDB
-      await db.collection('pickleball_courts').insertOne(court);
-      console.log('💾 Saved new court data to MongoDB');
-    } catch (error) {
-      console.error('❌ Failed to save court to MongoDB:', error);
-    }
-  } else {
-    console.log('❌ Failed to generate court data');
+  console.log('❌ Court not found');
   return new Response(null, {
     status: 404,
     statusText: 'Court not found'
   });
-}
 }
 
 console.log('✅ Found court:', {
