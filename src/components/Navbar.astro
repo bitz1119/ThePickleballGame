@@ -1,0 +1,40 @@
+---
+import ExpandableTabs from './ExpandableTabs.astro';
+import SideNavigation from './SideNavigation.astro';
+import { navTabs } from '../data/navigation';
+
+interface Props {
+  categories?: Array<{
+    title: string;
+    slug: string;
+    icon?: string;
+  }>;
+}
+
+const { categories = [] } = Astro.props;
+---
+
+<header class="bg-gradient-to-r from-purple-900 via-pink-900 to-blue-900">
+  <nav class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+    <!-- Logo or Title -->
+    <div class="flex items-center">
+      <img src="/logo.png" alt="Logo" class="w-10 h-10 mr-3">
+      <span class="text-white text-lg font-bold">
+        <a href="/">Pickleball Info</a>
+      </span>
+    </div>
+    
+    <!-- Side Navigation for Mobile -->
+    <SideNavigation categories={categories} />
+    
+    <!-- Expandable Tabs Navigation (Desktop) -->
+    <div class="hidden lg:block">
+      <ExpandableTabs 
+        tabs={navTabs} 
+        categories={categories} 
+        activeColor="text-white" 
+        className="border-white/20 bg-white/10 backdrop-blur-sm"
+      />
+    </div>
+  </nav>
+</header> 

@@ -1,7 +1,7 @@
 ---
 import { Icon } from 'astro-icon/components';
 import Dropdown from './Dropdown.astro';
-import type { TabItem } from '../data/navigation';
+import type { TabItem as NavigationTabItem } from '../data/navigation';
 
 interface Separator {
   type: "separator";
@@ -10,7 +10,7 @@ interface Separator {
   href?: never;
 }
 
-type TabItem = TabItem | Separator;
+type TabItem = NavigationTabItem | Separator;
 
 interface Props {
   tabs: TabItem[];
@@ -70,7 +70,7 @@ const {
     }
     
     .expandable-tab-icon {
-      color: black;
+      color: white;
       transition: color 0.3s ease;
     }
 
